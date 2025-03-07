@@ -15,6 +15,7 @@ import {
   Clock,
   Printer,
   Mail,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -261,6 +262,21 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({
                 <Button variant="outline" onClick={onAdjustmentClick}>
                   <Edit className="h-4 w-4 mr-1" />
                   Ajustar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    if (
+                      confirm(`Tem certeza que deseja apagar este pagamento?`)
+                    ) {
+                      // This will trigger the parent component to remove the payment
+                      onStatusChange(payment.id, "deleted");
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Apagar
                 </Button>
               </div>
             </div>

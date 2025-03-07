@@ -1,142 +1,328 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
-import {
-  Home,
-  Users,
-  Settings,
-  FileText,
-  BarChart2,
-  LogOut,
-  Bell,
-  HelpCircle,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  FileBarChart,
+  Settings,
+  Link2,
+  ChevronRight,
+  ChevronLeft,
+  LogOut,
+  HelpCircle,
+} from "lucide-react";
 
 interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   className?: string;
 }
 
-const Sidebar = ({ className }: SidebarProps = {}) => {
+interface NavItem {
+  title: string;
+  icon: React.ReactNode;
+  path: string;
+  badge?: {
+    count: number;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  };
+  children?: {
+    title: string;
+    path: string;
+  }[];
+}
+
+const Sidebar = ({
+  collapsed = false,
+  onToggleCollapse = () => {},
+  className = "",
+}: SidebarProps) => {
+  const location = useLocation();
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  const navItems: NavItem[] = [
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard size={collapsed ? 20 : 18} />,
+      path: "/",
+    },
+    {
+      title: "Gestão de Funcionários",
+      icon: <Users size={collapsed ? 20 : 18} />,
+      path: "/employees",
+      badge: { count: 2, variant: "secondary" },
+      children: [
+        { title: "Listar Funcionários", path: "/employees" },
+        { title: "Adicionar Funcionário", path: "/employees/add" },
+        { title: "Categorias", path: "/employees/categories" },
+        { title: "Estrutura Organizacional", path: "/employees/structure" },
+      ],
+    },
+    {
+      title: "Motor de Regras",
+      icon: <BookOpen size={collapsed ? 20 : 18} />,
+      path: "/rules",
+      children: [
+        { title: "Listar Regras", path: "/rules" },
+        { title: "Criar Nova Regra", path: "/rules/create" },
+        { title: "Testar Regras", path: "/rules/test" },
+      ],
+    },
+    {
+      title: "Sistema de Relatórios",
+      icon: <FileBarChart size={collapsed ? 20 : 18} />,
+      path: "/reports",
+      children: [
+        { title: "Relatórios Predefinidos", path: "/reports/predefined" },
+        { title: "Construtor de Relatórios", path: "/reports/builder" },
+        { title: "Dashboards Configuráveis", path: "/reports/dashboards" },
+        { title: "Modelos de Documentos", path: "/reports/templates" },
+      ],
+    },
+    {
+      title: "Configurações",
+      icon: <Settings size={collapsed ? 20 : 18} />,
+      path: "/settings",
+    },
+    {
+      title: "Integrações",
+      icon: <Link2 size={collapsed ? 20 : 18} />,
+      path: "/integrations",
+      badge: { count: 1, variant: "destructive" },
+    },
+  ];
+
+  const toggleSubmenu = (path: string) => {
+    setOpenSubmenu(openSubmenu === path ? null : path);
+  };
+
+  const isActive = (path: string) => {
+    return (
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
+  };
+
   return (
-    <div
+    <aside
       className={cn(
-        "flex flex-col h-full w-[280px] bg-slate-900 text-white p-4",
+        "bg-white border-r border-gray-200 h-full transition-all duration-300 flex flex-col",
+        collapsed ? "w-[70px]" : "w-[280px]",
         className,
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center mb-8 px-2">
-        <div className="w-10 h-10 rounded-md bg-primary mr-3 flex items-center justify-center">
-          <span className="font-bold text-xl text-white">GP</span>
-        </div>
-        <h1 className="text-xl font-bold">PaySystem</h1>
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        {!collapsed && (
+          <div className="flex items-center">
+            <div className="h-8 w-8 bg-blue-600 rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-lg">P</span>
+            </div>
+            <h2 className="ml-2 font-semibold text-gray-800 truncate">
+              PayManager
+            </h2>
+          </div>
+        )}
+        {collapsed && (
+          <div className="h-8 w-8 bg-blue-600 rounded-md flex items-center justify-center mx-auto">
+            <span className="text-white font-bold text-lg">P</span>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
+          onClick={onToggleCollapse}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </Button>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1">
-        <ul className="space-y-2">
-          <NavItem icon={<Home size={20} />} label="Dashboard" to="/" active />
-          <NavItem
-            icon={<Users size={20} />}
-            label="Funcionários"
-            to="/employees"
-          />
-          <NavItem
-            icon={<BarChart2 size={20} />}
-            label="Motor de Regras"
-            to="/rules"
-          />
-          <NavItem
-            icon={<FileText size={20} />}
-            label="Relatórios"
-            to="/reports"
-          />
-          <NavItem
-            icon={<Settings size={20} />}
-            label="Configurações"
-            to="/settings"
-          />
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1 px-2">
+          {navItems.map((item) => (
+            <li key={item.path}>
+              {item.children ? (
+                <div className="space-y-1">
+                  <button
+                    onClick={() => toggleSubmenu(item.path)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
+                      isActive(item.path)
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700 hover:bg-gray-100",
+                      collapsed && "justify-center",
+                    )}
+                  >
+                    <div className="flex items-center">
+                      <span className="mr-3">{item.icon}</span>
+                      {!collapsed && (
+                        <span className="font-medium truncate">
+                          {item.title}
+                        </span>
+                      )}
+                    </div>
+                    {!collapsed && (
+                      <ChevronRight
+                        size={16}
+                        className={cn(
+                          "transition-transform",
+                          openSubmenu === item.path && "transform rotate-90",
+                        )}
+                      />
+                    )}
+                    {item.badge && !collapsed && (
+                      <span
+                        className={cn(
+                          "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
+                          item.badge.variant === "destructive"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-blue-100 text-blue-600",
+                        )}
+                      >
+                        {item.badge.count}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Submenu items */}
+                  {!collapsed && openSubmenu === item.path && (
+                    <ul className="pl-10 space-y-1 mt-1">
+                      {item.children.map((child) => (
+                        <li key={child.path}>
+                          <Link
+                            to={child.path}
+                            className={cn(
+                              "block px-3 py-1.5 rounded-md text-sm transition-colors",
+                              isActive(child.path)
+                                ? "bg-blue-50 text-blue-700"
+                                : "text-gray-600 hover:bg-gray-100",
+                            )}
+                          >
+                            {child.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Tooltip for collapsed submenu items */}
+                  {collapsed && item.children && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="mt-1"></div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="p-0">
+                          <div className="bg-white rounded-md shadow-lg border border-gray-200 py-1 w-56">
+                            {item.children.map((child) => (
+                              <Link
+                                key={child.path}
+                                to={child.path}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                {child.title}
+                              </Link>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
+                          isActive(item.path)
+                            ? "bg-blue-50 text-blue-700"
+                            : "text-gray-700 hover:bg-gray-100",
+                          collapsed && "justify-center",
+                        )}
+                      >
+                        <span className={cn("mr-3", collapsed && "mr-0")}>
+                          {item.icon}
+                        </span>
+                        {!collapsed && (
+                          <span className="font-medium">{item.title}</span>
+                        )}
+                        {item.badge && !collapsed && (
+                          <span
+                            className={cn(
+                              "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
+                              item.badge.variant === "destructive"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-blue-100 text-blue-600",
+                            )}
+                          >
+                            {item.badge.count}
+                          </span>
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right">{item.title}</TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </li>
+          ))}
         </ul>
       </nav>
 
-      {/* Help Section */}
-      <div className="mb-6">
-        <div className="rounded-lg bg-slate-800 p-4">
-          <div className="flex items-center mb-3">
-            <HelpCircle size={18} className="mr-2 text-primary" />
-            <h3 className="font-medium">Precisa de ajuda?</h3>
-          </div>
-          <p className="text-sm text-slate-300 mb-3">
-            Acesse nosso centro de suporte para obter assistência.
-          </p>
-          <button className="w-full py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-md text-sm font-medium transition-colors">
-            Centro de Suporte
-          </button>
-        </div>
-      </div>
+      <div className="mt-auto border-t border-gray-200 p-4">
+        <div className="space-y-3">
+          {!collapsed && (
+            <div className="bg-blue-50 rounded-md p-3">
+              <p className="text-xs text-blue-700 font-medium">
+                Precisa de ajuda?
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Acesse nosso centro de suporte para obter assistência.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 bg-white border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <HelpCircle size={14} className="mr-1" />
+                Centro de Suporte
+              </Button>
+            </div>
+          )}
 
-      {/* User Profile */}
-      <div className="border-t border-slate-700 pt-4">
-        <div className="flex items-center">
-          <Avatar className="h-10 w-10 mr-3">
-            <AvatarImage
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin"
-              alt="Avatar"
-            />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Admin Usuário</p>
-            <p className="text-xs text-slate-400 truncate">admin@empresa.pt</p>
-          </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="p-1 rounded-md hover:bg-slate-800">
-                  <LogOut size={18} className="text-slate-400" />
-                </button>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full flex items-center text-red-600 hover:bg-red-50 hover:text-red-700",
+                    collapsed && "justify-center",
+                  )}
+                >
+                  <LogOut size={collapsed ? 20 : 16} className="mr-2" />
+                  {!collapsed && <span>Sair</span>}
+                </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Sair</p>
-              </TooltipContent>
+              {collapsed && <TooltipContent side="right">Sair</TooltipContent>}
             </Tooltip>
           </TooltipProvider>
         </div>
       </div>
-    </div>
-  );
-};
-
-interface NavItemProps {
-  icon: React.ReactNode;
-  label: string;
-  to: string;
-  active?: boolean;
-}
-
-const NavItem = ({ icon, label, to, active = false }: NavItemProps) => {
-  return (
-    <li>
-      <Link
-        to={to}
-        className={cn(
-          "flex items-center py-2 px-3 rounded-md transition-colors",
-          active
-            ? "bg-primary text-white font-medium"
-            : "text-slate-300 hover:bg-slate-800 hover:text-white",
-        )}
-      >
-        <span className="mr-3">{icon}</span>
-        <span>{label}</span>
-      </Link>
-    </li>
+    </aside>
   );
 };
 

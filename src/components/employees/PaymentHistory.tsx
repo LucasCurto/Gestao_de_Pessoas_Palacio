@@ -46,6 +46,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -401,6 +402,7 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
   >("payments");
   const [isNewPaymentDialogOpen, setIsNewPaymentDialogOpen] = useState(false);
   const [viewingPaymentDetails, setViewingPaymentDetails] = useState(false);
+  const [paymentRequests, setPaymentRequests] = useState<any[]>([]);
 
   // Filter activities that are approved but not yet paid
   const availableActivities = activities.filter(
@@ -503,11 +505,23 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
 
   const handleUpdatePaymentStatus = (
     paymentId: string,
-    newStatus: Payment["status"],
+    newStatus: Payment["status"] | "deleted",
   ) => {
+    // Handle deletion case separately
+    if (newStatus === "deleted") {
+      const updatedPayments = payments.filter(
+        (payment) => payment.id !== paymentId,
+      );
+      setPayments(updatedPayments);
+      setAccountEntries(generateAccountEntries(updatedPayments, employeeId));
+      setViewingPaymentDetails(false);
+      setSelectedPayment(null);
+      return;
+    }
+
     const updatedPayments = payments.map((payment) => {
       if (payment.id === paymentId) {
-        return { ...payment, status: newStatus };
+        return { ...payment, status: newStatus as Payment["status"] };
       }
       return payment;
     });
@@ -521,7 +535,10 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
 
     // Update selected payment if it's the one being changed
     if (selectedPayment && selectedPayment.id === paymentId) {
-      setSelectedPayment({ ...selectedPayment, status: newStatus });
+      setSelectedPayment({
+        ...selectedPayment,
+        status: newStatus as Payment["status"],
+      });
     }
   };
 
@@ -605,6 +622,29 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                           >
                             <FileText className="h-3.5 w-3.5 mr-1" />
                             Detalhes
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Tem certeza que deseja apagar o pagamento de ${payment.month}?`,
+                                )
+                              ) {
+                                setPayments(
+                                  payments.filter((p) => p.id !== payment.id),
+                                );
+                                if (selectedPayment?.id === payment.id) {
+                                  setSelectedPayment(null);
+                                  setViewingPaymentDetails(false);
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Apagar
                           </Button>
                         </div>
                       </TableCell>

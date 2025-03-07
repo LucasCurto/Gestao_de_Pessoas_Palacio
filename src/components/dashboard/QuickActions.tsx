@@ -1,19 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import {
-  PlusCircle,
-  FileText,
-  Users,
-  Calculator,
-  Calendar,
-} from "lucide-react";
+import { PlusCircle, Users } from "lucide-react";
+import AddEmployeeForm from "../employees/AddEmployeeForm";
+import NewPaymentForm from "../employees/NewPaymentForm";
 
 interface QuickActionProps {
   actions?: Array<{
@@ -26,45 +30,68 @@ interface QuickActionProps {
 }
 
 const QuickActions = ({ actions }: QuickActionProps) => {
+  const navigate = useNavigate();
+  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
+  const [isNewPaymentDialogOpen, setIsNewPaymentDialogOpen] = useState(false);
+
+  const handleAddEmployee = (data: any) => {
+    // In a real app, this would add the employee to the database
+    console.log("Adding employee:", data);
+    setIsAddEmployeeDialogOpen(false);
+    // Navigate to employees page after adding
+    navigate("/employees");
+  };
+
+  const handleCreatePayment = (paymentData: any) => {
+    // In a real app, this would create a payment in the database
+    console.log("Creating payment:", paymentData);
+    setIsNewPaymentDialogOpen(false);
+    // Navigate to employee profile after creating payment
+    navigate(`/employees/${paymentData.employeeId}`);
+  };
+
   const defaultActions = [
     {
       id: "new-payment",
       label: "Novo Pagamento",
       icon: <PlusCircle className="h-5 w-5" />,
-      onClick: () => console.log("Novo pagamento"),
+      onClick: () => setIsNewPaymentDialogOpen(true),
       tooltip: "Criar um novo pagamento",
-    },
-    {
-      id: "generate-report",
-      label: "Gerar Relatório",
-      icon: <FileText className="h-5 w-5" />,
-      onClick: () => console.log("Gerar relatório"),
-      tooltip: "Gerar um novo relatório",
     },
     {
       id: "add-employee",
       label: "Adicionar Funcionário",
       icon: <Users className="h-5 w-5" />,
-      onClick: () => console.log("Adicionar funcionário"),
+      onClick: () => setIsAddEmployeeDialogOpen(true),
       tooltip: "Adicionar um novo funcionário",
-    },
-    {
-      id: "calculate-taxes",
-      label: "Calcular Impostos",
-      icon: <Calculator className="h-5 w-5" />,
-      onClick: () => console.log("Calcular impostos"),
-      tooltip: "Calcular impostos do período",
-    },
-    {
-      id: "schedule-payment",
-      label: "Agendar Pagamento",
-      icon: <Calendar className="h-5 w-5" />,
-      onClick: () => console.log("Agendar pagamento"),
-      tooltip: "Agendar um pagamento futuro",
     },
   ];
 
   const displayActions = actions || defaultActions;
+
+  // Mock data for the payment form
+  const mockActivities = [
+    {
+      id: "1",
+      employeeId: "1",
+      type: "overtime",
+      description: "Finalização de relatório mensal",
+      date: new Date("2023-05-15"),
+      hours: 3,
+      rate: 15,
+      status: "approved",
+    },
+    {
+      id: "2",
+      employeeId: "1",
+      type: "weekend",
+      description: "Preparação para auditoria",
+      date: new Date("2023-05-20"),
+      hours: 5,
+      rate: 20,
+      status: "approved",
+    },
+  ];
 
   return (
     <Card className="w-full p-4 bg-white shadow-sm">
@@ -92,6 +119,48 @@ const QuickActions = ({ actions }: QuickActionProps) => {
           </TooltipProvider>
         </div>
       </div>
+
+      {/* Add Employee Dialog */}
+      <Dialog
+        open={isAddEmployeeDialogOpen}
+        onOpenChange={setIsAddEmployeeDialogOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+            <DialogDescription>
+              Preencha os dados do novo funcionário para adicioná-lo ao sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <AddEmployeeForm
+            onSubmit={handleAddEmployee}
+            onCancel={() => setIsAddEmployeeDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* New Payment Dialog */}
+      <Dialog
+        open={isNewPaymentDialogOpen}
+        onOpenChange={setIsNewPaymentDialogOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Pagamento</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes para criar um novo pagamento.
+            </DialogDescription>
+          </DialogHeader>
+          <NewPaymentForm
+            employeeId="1"
+            employeeName="Ana Silva"
+            baseSalary={2500}
+            availableActivities={mockActivities}
+            onSubmit={handleCreatePayment}
+            onCancel={() => setIsNewPaymentDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
