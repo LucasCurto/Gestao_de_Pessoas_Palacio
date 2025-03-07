@@ -1,19 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import EditEmployeeForm from "./EditEmployeeForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import ActivityRegistry from "./ActivityRegistry";
 import PaymentHistory from "./PaymentHistory";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -333,29 +325,10 @@ const getPaymentStatusBadge = (status: EmployeePayment["status"]) => {
 const EmployeeProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [employeeData, setEmployeeData] =
-    useState<Record<string, EmployeeData>>(employeesData);
 
   // Default to first employee if no ID is provided
   const employeeId = id || "1";
-  const employee = employeeData[employeeId] || employeeData["1"];
-
-  const handleUpdateEmployee = (updatedEmployee: any) => {
-    setEmployeeData({
-      ...employeeData,
-      [employeeId]: {
-        ...updatedEmployee,
-        // Convert Date objects back to strings for storage
-        hireDate: updatedEmployee.hireDate.toISOString().split("T")[0],
-        birthDate: updatedEmployee.birthDate.toISOString().split("T")[0],
-        // Preserve activities and payments from the original employee data
-        activities: employee.activities,
-        payments: employee.payments,
-      },
-    });
-    setIsEditDialogOpen(false);
-  };
+  const employee = employeesData[employeeId] || employeesData["1"];
 
   if (!employee) {
     return (
@@ -386,11 +359,7 @@ const EmployeeProfile = () => {
         <h1 className="text-2xl font-bold text-gray-800">
           Perfil do Funcionário
         </h1>
-        <Button
-          variant="outline"
-          className="ml-auto"
-          onClick={() => setIsEditDialogOpen(true)}
-        >
+        <Button variant="outline" className="ml-auto">
           <Edit className="h-4 w-4 mr-2" />
           Editar
         </Button>
@@ -448,6 +417,7 @@ const EmployeeProfile = () => {
           <TabsTrigger value="info">Informações</TabsTrigger>
           <TabsTrigger value="activities">Registo de Atividades</TabsTrigger>
           <TabsTrigger value="payments">Histórico de Pagamentos</TabsTrigger>
+          <TabsTrigger value="activity-registry">Registo de Horas</TabsTrigger>
         </TabsList>
 
         {/* Personal Information Tab */}
@@ -581,29 +551,12 @@ const EmployeeProfile = () => {
             activities={[]} // In a real app, we would pass the actual activities here
           />
         </TabsContent>
+
+        {/* Activity Registry Tab */}
+        <TabsContent value="activity-registry">
+          <ActivityRegistry employeeId={employee.id} />
+        </TabsContent>
       </Tabs>
-
-      {/* Edit Employee Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Funcionário</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do funcionário {employee.name}.
-            </DialogDescription>
-          </DialogHeader>
-
-          <EditEmployeeForm
-            employee={{
-              ...employee,
-              hireDate: new Date(employee.hireDate),
-              birthDate: new Date(employee.birthDate),
-            }}
-            onSubmit={handleUpdateEmployee}
-            onCancel={() => setIsEditDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
