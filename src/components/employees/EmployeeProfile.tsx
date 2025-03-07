@@ -1,12 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import ActivityRegistry from "./ActivityRegistry";
 import PaymentHistory from "./PaymentHistory";
+import EditEmployeeForm from "./EditEmployeeForm";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
@@ -325,10 +333,29 @@ const getPaymentStatusBadge = (status: EmployeePayment["status"]) => {
 const EmployeeProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [employeeData, setEmployeeData] =
+    useState<Record<string, EmployeeData>>(employeesData);
 
   // Default to first employee if no ID is provided
   const employeeId = id || "1";
-  const employee = employeesData[employeeId] || employeesData["1"];
+  const employee = employeeData[employeeId] || employeeData["1"];
+
+  const handleUpdateEmployee = (updatedEmployee: any) => {
+    setEmployeeData({
+      ...employeeData,
+      [employeeId]: {
+        ...updatedEmployee,
+        // Convert Date objects back to strings for storage
+        hireDate: updatedEmployee.hireDate.toISOString().split("T")[0],
+        birthDate: updatedEmployee.birthDate.toISOString().split("T")[0],
+        // Preserve activities and payments from the original employee data
+        activities: employee.activities,
+        payments: employee.payments,
+      },
+    });
+    setIsEditDialogOpen(false);
+  };
 
   if (!employee) {
     return (
@@ -359,7 +386,11 @@ const EmployeeProfile = () => {
         <h1 className="text-2xl font-bold text-gray-800">
           Perfil do Funcionário
         </h1>
-        <Button variant="outline" className="ml-auto">
+        <Button
+          variant="outline"
+          className="ml-auto"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
           <Edit className="h-4 w-4 mr-2" />
           Editar
         </Button>
@@ -459,7 +490,7 @@ const EmployeeProfile = () => {
               </CardContent>
             </Card>
 
-            {/* Employment Details */}
+            {/* Professional Details */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
@@ -469,10 +500,13 @@ const EmployeeProfile = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Gestor</span>
-                    <span className="font-medium">
-                      {employee.manager || "N/A"}
-                    </span>
+                    <span className="text-gray-500">Departamento</span>
+                    <span className="font-medium">{employee.department}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Cargo</span>
+                    <span className="font-medium">{employee.position}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between">
@@ -481,20 +515,72 @@ const EmployeeProfile = () => {
                   </div>
                   <Separator />
                   <div className="flex justify-between">
+                    <span className="text-gray-500">Gestor</span>
+                    <span className="font-medium">
+                      {employee.manager || "N/A"}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between">
                     <span className="text-gray-500">Formação Académica</span>
                     <span className="font-medium">{employee.education}</span>
                   </div>
-                  <Separator />
-                  <div className="flex flex-col">
-                    <span className="text-gray-500 mb-2">Competências</span>
-                    <div className="flex flex-wrap gap-2">
-                      {employee.skills.map((skill, index) => (
-                        <Badge key={index} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Skills */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Competências</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {employee.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                  {employee.skills.length === 0 && (
+                    <p className="text-gray-500">
+                      Nenhuma competência registada
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activities */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Atividades Recentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {employee.activities.slice(0, 3).map((activity) => (
+                    <div key={activity.id} className="flex">
+                      <div className="mr-4">
+                        <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                          {activity.icon}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-medium">{activity.type}</p>
+                        <p className="text-sm text-gray-600">
+                          {activity.description}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(activity.date).toLocaleString("pt-PT", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                  {employee.activities.length === 0 && (
+                    <p className="text-gray-500">Nenhuma atividade registada</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -505,39 +591,45 @@ const EmployeeProfile = () => {
         <TabsContent value="activities">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Registo de Atividades</CardTitle>
+              <CardTitle className="text-lg">Histórico de Atividades</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {employee.activities.map((activity) => (
                   <div key={activity.id} className="flex">
-                    <div className="mr-4 mt-1">
-                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <div className="mr-4">
+                      <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
                         {activity.icon}
                       </div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <Badge variant="outline" className="mb-1">
-                            {activity.type}
-                          </Badge>
-                          <h4 className="font-medium">
-                            {activity.description}
-                          </h4>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(activity.date).toLocaleDateString("pt-PT", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
+                        <p className="font-medium">{activity.type}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(activity.date).toLocaleString("pt-PT", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
                           })}
-                        </span>
+                        </p>
                       </div>
+                      <p className="text-gray-600 mt-1">
+                        {activity.description}
+                      </p>
                       <Separator className="my-4" />
                     </div>
                   </div>
                 ))}
+                {employee.activities.length === 0 && (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Nenhuma atividade registada
+                    </h3>
+                    <p className="text-gray-500 mt-2">
+                      Este funcionário ainda não tem atividades registadas.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -548,7 +640,7 @@ const EmployeeProfile = () => {
           <PaymentHistory
             employeeId={employee.id}
             employeeName={employee.name}
-            activities={[]} // In a real app, we would pass the actual activities here
+            activities={[]}
           />
         </TabsContent>
 
@@ -557,6 +649,28 @@ const EmployeeProfile = () => {
           <ActivityRegistry employeeId={employee.id} />
         </TabsContent>
       </Tabs>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do funcionário {employee.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <EditEmployeeForm
+            employee={{
+              ...employee,
+              hireDate: new Date(employee.hireDate),
+              birthDate: new Date(employee.birthDate),
+              skills: employee.skills || [],
+            }}
+            onSubmit={handleUpdateEmployee}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -14,6 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,6 +38,8 @@ import {
   UserPlus,
   Filter,
 } from "lucide-react";
+import AddEmployeeForm, { NewEmployeeFormData } from "./AddEmployeeForm";
+import EditEmployeeForm from "./EditEmployeeForm";
 
 interface Employee {
   id: string;
@@ -41,6 +50,14 @@ interface Employee {
   status: "active" | "inactive" | "on_leave";
   hireDate: string;
   avatarUrl?: string;
+  birthDate?: string;
+  nif?: string;
+  bankAccount?: string;
+  emergencyContact?: string;
+  manager?: string;
+  contractType?: string;
+  education?: string;
+  skills?: string[];
 }
 
 const defaultEmployees: Employee[] = [
@@ -53,6 +70,19 @@ const defaultEmployees: Employee[] = [
     status: "active",
     hireDate: "2020-03-15",
     avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ana",
+    birthDate: "1985-06-12",
+    nif: "123456789",
+    bankAccount: "PT50 1234 5678 9012 3456 7890 1",
+    emergencyContact: "João Silva: +351 913 456 789",
+    manager: "Carlos Mendes",
+    contractType: "Sem Termo",
+    education: "Mestrado em Gestão de Recursos Humanos",
+    skills: [
+      "Recrutamento",
+      "Gestão de Talento",
+      "Legislação Laboral",
+      "Formação",
+    ],
   },
   {
     id: "2",
@@ -63,6 +93,14 @@ const defaultEmployees: Employee[] = [
     status: "active",
     hireDate: "2021-05-10",
     avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Joao",
+    birthDate: "1990-08-22",
+    nif: "234567890",
+    bankAccount: "PT50 2345 6789 0123 4567 8901 2",
+    emergencyContact: "Maria Santos: +351 924 567 890",
+    manager: "Ana Silva",
+    contractType: "Sem Termo",
+    education: "Licenciatura em Economia",
+    skills: ["Análise Financeira", "Excel Avançado", "SAP", "Contabilidade"],
   },
   {
     id: "3",
@@ -117,6 +155,11 @@ const EmployeeList = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<Employee[]>(defaultEmployees);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
 
   const filteredEmployees = employees.filter(
     (employee) =>
@@ -130,11 +173,76 @@ const EmployeeList = () => {
     setEmployees(employees.filter((employee) => employee.id !== id));
   };
 
+  const handleAddEmployee = (data: NewEmployeeFormData) => {
+    const newEmployee: Employee = {
+      id: `${employees.length + 1}`,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      department: data.department,
+      position: data.position,
+      status: data.status,
+      hireDate: data.hireDate.toISOString().split("T")[0],
+      birthDate: data.birthDate.toISOString().split("T")[0],
+      nif: data.nif,
+      bankAccount: data.bankAccount,
+      emergencyContact: data.emergencyContact,
+      avatarUrl:
+        data.avatarUrl ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name.replace(" ", "")}`,
+      manager: data.manager,
+      contractType: data.contractType,
+      education: data.education,
+      skills: data.skills,
+    };
+
+    setEmployees([...employees, newEmployee]);
+    setIsAddDialogOpen(false);
+  };
+
+  const handleEditEmployee = (data: any) => {
+    if (!selectedEmployee) return;
+
+    const updatedEmployees = employees.map((emp) => {
+      if (emp.id === selectedEmployee.id) {
+        return {
+          ...emp,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          department: data.department,
+          position: data.position,
+          status: data.status,
+          hireDate: data.hireDate.toISOString().split("T")[0],
+          birthDate: data.birthDate.toISOString().split("T")[0],
+          nif: data.nif,
+          bankAccount: data.bankAccount,
+          emergencyContact: data.emergencyContact,
+          avatarUrl: data.avatarUrl || emp.avatarUrl,
+          manager: data.manager,
+          contractType: data.contractType,
+          education: data.education,
+          skills: data.skills,
+        };
+      }
+      return emp;
+    });
+
+    setEmployees(updatedEmployees);
+    setIsEditDialogOpen(false);
+    setSelectedEmployee(null);
+  };
+
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Funcionários</h1>
-        <Button className="flex items-center gap-2">
+        <Button
+          className="flex items-center gap-2"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
           <UserPlus className="h-4 w-4" />
           <span>Adicionar Funcionário</span>
         </Button>
@@ -241,7 +349,12 @@ const EmployeeList = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Editar</span>
                         </DropdownMenuItem>
@@ -268,6 +381,51 @@ const EmployeeList = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Add Employee Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+            <DialogDescription>
+              Preencha os dados do novo funcionário para adicioná-lo ao sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <AddEmployeeForm
+            onSubmit={handleAddEmployee}
+            onCancel={() => setIsAddDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Employee Dialog */}
+      {selectedEmployee && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Funcionário</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do funcionário {selectedEmployee.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <EditEmployeeForm
+              employee={{
+                ...selectedEmployee,
+                hireDate: new Date(selectedEmployee.hireDate),
+                birthDate: selectedEmployee.birthDate
+                  ? new Date(selectedEmployee.birthDate)
+                  : new Date(),
+                skills: selectedEmployee.skills || [],
+              }}
+              onSubmit={handleEditEmployee}
+              onCancel={() => {
+                setIsEditDialogOpen(false);
+                setSelectedEmployee(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
