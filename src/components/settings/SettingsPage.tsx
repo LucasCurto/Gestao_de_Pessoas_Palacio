@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../layout/Sidebar";
 import Header from "../layout/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CompanySettings from "./CompanySettings";
+import CompanyManagement from "./CompanyManagement";
 import UserSettings from "./UserSettings";
 import IntegrationSettings from "./IntegrationSettings";
 import FieldSettings from "./FieldSettings";
@@ -38,7 +38,7 @@ const SettingsPage = () => {
               </TabsList>
 
               <TabsContent value="company">
-                <CompanySettings />
+                <CompanyManagement />
               </TabsContent>
 
               <TabsContent value="users">

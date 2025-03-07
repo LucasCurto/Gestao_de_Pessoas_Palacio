@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useCompany } from "@/context/CompanyContext";
 import Sidebar from "./layout/Sidebar";
 import Header from "./layout/Header";
 import FinancialOverview from "./dashboard/FinancialOverview";
@@ -7,6 +8,16 @@ import HRMetrics from "./dashboard/HRMetrics";
 import QuickActions from "./dashboard/QuickActions";
 
 const Home = () => {
+  const { currentCompany } = useCompany();
+  const [companyName, setCompanyName] = useState("");
+
+  useEffect(() => {
+    setCompanyName(currentCompany.name);
+    // Aqui você poderia carregar dados específicos da empresa
+    console.log(
+      `Carregando dados para a empresa: ${currentCompany.name} (ID: ${currentCompany.id})`,
+    );
+  }, [currentCompany]);
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -15,7 +26,7 @@ const Home = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <Header title="Dashboard" />
+        <Header title={`Dashboard - ${companyName}`} />
 
         {/* Main Dashboard Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

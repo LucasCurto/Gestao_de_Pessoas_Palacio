@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useCompany } from "@/context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +93,7 @@ interface Payment {
     taxes: number;
   };
   notes?: string;
+  companyId?: string;
 }
 
 interface AccountEntry {
@@ -141,6 +143,7 @@ const mockPayments: Payment[] = [
       taxes: 200,
     },
     notes: "Pagamento processado com sucesso",
+    companyId: "1",
   },
   {
     id: "p2",
@@ -382,9 +385,22 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
   employeeName,
   activities,
 }) => {
+  const { currentCompany } = useCompany();
   const [payments, setPayments] = useState<Payment[]>(
     mockPayments.filter((p) => p.employeeId === employeeId),
   );
+
+  // Filtrar pagamentos por empresa quando a empresa mudar
+  useEffect(() => {
+    // Em um cenário real, você buscaria os pagamentos do backend filtrados por empresa
+    // Aqui estamos apenas simulando com dados estáticos
+    const filteredPayments = mockPayments.filter(
+      (p) =>
+        p.employeeId === employeeId &&
+        (!p.companyId || p.companyId === currentCompany.id),
+    );
+    setPayments(filteredPayments);
+  }, [employeeId, currentCompany.id]);
   const [accountEntries, setAccountEntries] = useState<AccountEntry[]>(
     generateAccountEntries(mockPayments, employeeId),
   );
@@ -497,6 +513,7 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
         taxes: paymentData.taxes,
       },
       notes: paymentData.notes,
+      companyId: currentCompany.id, // Associar o pagamento à empresa atual
     };
 
     setPayments([...payments, newPayment]);

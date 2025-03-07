@@ -11,6 +11,7 @@ import {
   Calendar,
   MessageSquare,
 } from "lucide-react";
+import CompanySelector from "@/components/company/CompanySelector";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,11 @@ const Header = ({
           >
             <Menu className="h-5 w-5" />
           </Button>
+
+          {/* Company Selector */}
+          <div className="mr-4">
+            <CompanySelector />
+          </div>
 
           {/* Search - Collapsible on mobile */}
           <div

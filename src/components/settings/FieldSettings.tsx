@@ -31,18 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "@hello-pangea/dnd";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Temporarily remove drag and drop functionality until package is installed
+// Will use simple list rendering instead
 import {
   Save,
   Plus,
@@ -143,13 +134,12 @@ const FieldSettings = () => {
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [isEditFieldDialogOpen, setIsEditFieldDialogOpen] = useState(false);
   const [selectedField, setSelectedField] = useState<CustomField | null>(null);
-  const [activeEntity, setActiveEntity] = useState<CustomField["entity"]>(
-    "employee"
-  );
+  const [activeEntity, setActiveEntity] =
+    useState<CustomField["entity"]>("employee");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const [newField, setNewField] = useState<Omit<CustomField, "id" | "order">>({    
+  const [newField, setNewField] = useState<Omit<CustomField, "id" | "order">>({
     name: "",
     type: "text",
     entity: "employee",
@@ -167,7 +157,7 @@ const FieldSettings = () => {
 
   const handleAddField = () => {
     const fieldsForEntity = customFields.filter(
-      (field) => field.entity === newField.entity
+      (field) => field.entity === newField.entity,
     );
     const maxOrder = fieldsForEntity.length
       ? Math.max(...fieldsForEntity.map((f) => f.order))
@@ -210,7 +200,7 @@ const FieldSettings = () => {
           return selectedField;
         }
         return field;
-      })
+      }),
     );
 
     setIsEditFieldDialogOpen(false);
@@ -230,28 +220,13 @@ const FieldSettings = () => {
           return { ...field, visible: !field.visible };
         }
         return field;
-      })
+      }),
     );
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const items = Array.from(filteredFields);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update order property for all items
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      order: index + 1,
-    }));
-
-    // Merge with fields from other entities
-    const otherFields = customFields.filter(
-      (field) => field.entity !== activeEntity
-    );
-    setCustomFields([...otherFields, ...updatedItems]);
+  const handleDragEnd = (/*result: any*/) => {
+    // Drag and drop functionality temporarily disabled
+    // Will be re-implemented when @hello-pangea/dnd is installed
   };
 
   const handleAddOption = () => {
@@ -321,7 +296,9 @@ const FieldSettings = () => {
 
       <Tabs
         value={activeEntity}
-        onValueChange={(value) => setActiveEntity(value as CustomField["entity"])}
+        onValueChange={(value) =>
+          setActiveEntity(value as CustomField["entity"])
+        }
       >
         <TabsList className="mb-4">
           <TabsTrigger value="employee">Funcionários</TabsTrigger>
@@ -338,10 +315,10 @@ const FieldSettings = () => {
                 {activeEntity === "employee"
                   ? "Funcionários"
                   : activeEntity === "payment"
-                  ? "Pagamentos"
-                  : activeEntity === "activity"
-                  ? "Atividades"
-                  : "Empresa"}
+                    ? "Pagamentos"
+                    : activeEntity === "activity"
+                      ? "Atividades"
+                      : "Empresa"}
               </CardTitle>
               <Button onClick={() => setIsAddFieldDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -362,111 +339,83 @@ const FieldSettings = () => {
                   </Button>
                 </div>
               ) : (
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="fields">
-                    {(provided) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className="space-y-2"
-                      >
-                        {filteredFields.map((field, index) => (
-                          <Draggable
-                            key={field.id}
-                            draggableId={field.id}
-                            index={index}
-                          >
-                            {(provided) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`p-4 border rounded-md ${field.visible ? "bg-white" : "bg-gray-50"}`}
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div className="flex items-start">
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="mr-2 mt-1 cursor-move"
-                                    >
-                                      <GripVertical className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <h3 className="font-medium">
-                                          {field.name}
-                                        </h3>
-                                        {field.required && (
-                                          <Badge className="bg-red-100 text-red-800">
-                                            Obrigatório
-                                          </Badge>
-                                        )}
-                                        <Badge
-                                          variant="outline"
-                                          className="capitalize"
-                                        >
-                                          {field.type === "text"
-                                            ? "Texto"
-                                            : field.type === "number"
-                                            ? "Número"
-                                            : field.type === "date"
-                                            ? "Data"
-                                            : field.type === "select"
-                                            ? "Seleção"
-                                            : field.type === "checkbox"
-                                            ? "Checkbox"
-                                            : "Área de Texto"}
-                                        </Badge>
-                                      </div>
-                                      {field.description && (
-                                        <p className="text-sm text-gray-500 mt-1">
-                                          {field.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() =>
-                                        handleToggleFieldVisibility(field.id)
-                                      }
-                                      title={field.visible ? "Ocultar" : "Mostrar"}
-                                    >
-                                      {field.visible ? (
-                                        <Eye className="h-4 w-4" />
-                                      ) : (
-                                        <EyeOff className="h-4 w-4" />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleEditField(field)}
-                                      title="Editar"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="text-red-600"
-                                      onClick={() => handleDeleteField(field.id)}
-                                      title="Remover"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
+                <div className="space-y-2">
+                  {filteredFields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className={`p-4 border rounded-md ${field.visible ? "bg-white" : "bg-gray-50"}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-start">
+                          <div className="mr-2 mt-1">
+                            <GripVertical className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium">{field.name}</h3>
+                              {field.required && (
+                                <Badge className="bg-red-100 text-red-800">
+                                  Obrigatório
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="capitalize">
+                                {field.type === "text"
+                                  ? "Texto"
+                                  : field.type === "number"
+                                    ? "Número"
+                                    : field.type === "date"
+                                      ? "Data"
+                                      : field.type === "select"
+                                        ? "Seleção"
+                                        : field.type === "checkbox"
+                                          ? "Checkbox"
+                                          : "Área de Texto"}
+                              </Badge>
+                            </div>
+                            {field.description && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                {field.description}
+                              </p>
                             )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              handleToggleFieldVisibility(field.id)
+                            }
+                            title={field.visible ? "Ocultar" : "Mostrar"}
+                          >
+                            {field.visible ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditField(field)}
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600"
+                            onClick={() => handleDeleteField(field.id)}
+                            title="Remover"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -540,3 +489,218 @@ const FieldSettings = () => {
                   <SelectItem value="number">Número</SelectItem>
                   <SelectItem value="date">Data</SelectItem>
                   <SelectItem value="select">Seleção</SelectItem>
+                  <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="textarea">Área de Texto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="field-description">Descrição</Label>
+              <Input
+                id="field-description"
+                value={newField.description}
+                onChange={(e) =>
+                  setNewField({ ...newField, description: e.target.value })
+                }
+                placeholder="Descrição do campo"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="field-required"
+                checked={newField.required}
+                onCheckedChange={(checked) =>
+                  setNewField({ ...newField, required: checked })
+                }
+              />
+              <Label htmlFor="field-required">Campo obrigatório</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddFieldDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAddField}
+              disabled={!newField.name || !newField.type || !newField.entity}
+            >
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Field Dialog */}
+      <Dialog
+        open={isEditFieldDialogOpen}
+        onOpenChange={setIsEditFieldDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Campo Personalizado</DialogTitle>
+            <DialogDescription>
+              Modifique as propriedades do campo personalizado.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedField && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-field-name">Nome do Campo</Label>
+                <Input
+                  id="edit-field-name"
+                  value={selectedField.name}
+                  onChange={(e) =>
+                    setSelectedField({
+                      ...selectedField,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-field-type">Tipo de Campo</Label>
+                <Select
+                  value={selectedField.type}
+                  onValueChange={(value) =>
+                    setSelectedField({
+                      ...selectedField,
+                      type: value as CustomField["type"],
+                    })
+                  }
+                >
+                  <SelectTrigger id="edit-field-type">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Texto</SelectItem>
+                    <SelectItem value="number">Número</SelectItem>
+                    <SelectItem value="date">Data</SelectItem>
+                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                    <SelectItem value="select">Seleção</SelectItem>
+                    <SelectItem value="textarea">Área de Texto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedField.type === "select" && (
+                <div className="grid gap-2">
+                  <Label>Opções</Label>
+                  <div className="space-y-2">
+                    {selectedField.options?.map((option, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={option}
+                          onChange={(e) =>
+                            handleUpdateOption(index, e.target.value)
+                          }
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveOption(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddOption}
+                      className="mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> Adicionar Opção
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-field-placeholder">Placeholder</Label>
+                <Input
+                  id="edit-field-placeholder"
+                  value={selectedField.placeholder || ""}
+                  onChange={(e) =>
+                    setSelectedField({
+                      ...selectedField,
+                      placeholder: e.target.value,
+                    })
+                  }
+                  placeholder="Texto de exemplo"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-field-default">Valor Padrão</Label>
+                <Input
+                  id="edit-field-default"
+                  value={selectedField.defaultValue || ""}
+                  onChange={(e) =>
+                    setSelectedField({
+                      ...selectedField,
+                      defaultValue: e.target.value,
+                    })
+                  }
+                  placeholder="Valor padrão"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-field-description">Descrição</Label>
+                <Input
+                  id="edit-field-description"
+                  value={selectedField.description || ""}
+                  onChange={(e) =>
+                    setSelectedField({
+                      ...selectedField,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Descrição do campo"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="edit-field-required"
+                  checked={selectedField.required}
+                  onCheckedChange={(checked) =>
+                    setSelectedField({
+                      ...selectedField,
+                      required: checked,
+                    })
+                  }
+                />
+                <Label htmlFor="edit-field-required">Campo obrigatório</Label>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditFieldDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateField}>Salvar Alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default FieldSettings;

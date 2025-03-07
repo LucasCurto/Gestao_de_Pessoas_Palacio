@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useCompany } from "@/context/CompanyContext";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,8 @@ import {
 } from "lucide-react";
 
 interface FieldSelectorProps {
-  onFieldSelect?: (field: Field) => void;
-  selectedFields?: Field[];
+  onFieldSelect: (field: Field) => void;
+  selectedFields: Field[];
   className?: string;
 }
 
@@ -51,10 +52,11 @@ interface FieldCategory {
 }
 
 const FieldSelector: React.FC<FieldSelectorProps> = ({
-  onFieldSelect = () => {},
-  selectedFields = [],
+  onFieldSelect,
+  selectedFields,
   className,
 }) => {
+  const { currentCompany } = useCompany();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     "employee",

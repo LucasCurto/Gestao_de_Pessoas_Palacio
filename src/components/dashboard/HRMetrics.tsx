@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
 import { BarChart, Users, TrendingUp, DollarSign } from "lucide-react";
+import { useCompany } from "@/context/CompanyContext";
 
 interface HRMetricsProps {
   metrics?: {
@@ -13,11 +14,13 @@ interface HRMetricsProps {
       count: number;
     }[];
     employeeGrowth: number;
+    companyId?: string;
   };
 }
 
-const HRMetrics = ({
-  metrics = {
+const HRMetrics = ({ metrics: propMetrics }: HRMetricsProps) => {
+  const { currentCompany } = useCompany();
+  const [metrics, setMetrics] = useState({
     turnoverRate: 12.5,
     averageCost: 2850,
     salaryDistribution: [
@@ -28,8 +31,47 @@ const HRMetrics = ({
       { category: "Outros", percentage: 5, count: 2 },
     ],
     employeeGrowth: 8.3,
-  },
-}: HRMetricsProps) => {
+  });
+
+  // Dados de exemplo por empresa
+  const companyMetrics = {
+    "1": {
+      turnoverRate: 12.5,
+      averageCost: 2850,
+      salaryDistribution: [
+        { category: "Administração", percentage: 35, count: 12 },
+        { category: "Operações", percentage: 25, count: 8 },
+        { category: "Vendas", percentage: 20, count: 7 },
+        { category: "TI", percentage: 15, count: 5 },
+        { category: "Outros", percentage: 5, count: 2 },
+      ],
+      employeeGrowth: 8.3,
+    },
+    "2": {
+      turnoverRate: 9.2,
+      averageCost: 3200,
+      salaryDistribution: [
+        { category: "Administração", percentage: 30, count: 6 },
+        { category: "Operações", percentage: 20, count: 4 },
+        { category: "Vendas", percentage: 25, count: 5 },
+        { category: "TI", percentage: 20, count: 4 },
+        { category: "Outros", percentage: 5, count: 1 },
+      ],
+      employeeGrowth: 12.7,
+    },
+  };
+
+  // Atualiza os dados quando a empresa muda
+  useEffect(() => {
+    if (propMetrics) {
+      setMetrics(propMetrics);
+    } else {
+      // @ts-ignore - Ignorando o erro de índice para simplificar
+      const companyData =
+        companyMetrics[currentCompany.id] || companyMetrics["1"];
+      setMetrics(companyData);
+    }
+  }, [currentCompany.id, propMetrics]);
   return (
     <Card className="w-full h-full bg-white overflow-hidden">
       <CardHeader className="pb-2">

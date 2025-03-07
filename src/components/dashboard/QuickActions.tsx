@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useCompany } from "@/context/CompanyContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -31,8 +32,15 @@ interface QuickActionProps {
 
 const QuickActions = ({ actions }: QuickActionProps) => {
   const navigate = useNavigate();
+  const { currentCompany } = useCompany();
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isNewPaymentDialogOpen, setIsNewPaymentDialogOpen] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+
+  // Atualizar o nome da empresa quando ela mudar
+  useEffect(() => {
+    setCompanyName(currentCompany.name);
+  }, [currentCompany]);
 
   const handleAddEmployee = (data: any) => {
     // In a real app, this would add the employee to the database
@@ -127,7 +135,9 @@ const QuickActions = ({ actions }: QuickActionProps) => {
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+            <DialogTitle>
+              Adicionar Novo Funcionário - {companyName}
+            </DialogTitle>
             <DialogDescription>
               Preencha os dados do novo funcionário para adicioná-lo ao sistema.
             </DialogDescription>
@@ -146,7 +156,7 @@ const QuickActions = ({ actions }: QuickActionProps) => {
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Criar Novo Pagamento</DialogTitle>
+            <DialogTitle>Criar Novo Pagamento - {companyName}</DialogTitle>
             <DialogDescription>
               Preencha os detalhes para criar um novo pagamento.
             </DialogDescription>
