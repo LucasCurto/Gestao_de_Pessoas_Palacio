@@ -40,6 +40,8 @@ interface DashboardWidgetProps {
   onSettings?: () => void;
   onMaximize?: () => void;
   onExport?: (format: string) => void;
+  isLoading?: boolean;
+  customData?: any;
 }
 
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({
@@ -54,18 +56,34 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   onSettings,
   onMaximize,
   onExport,
+  isLoading: propIsLoading,
+  customData,
 }) => {
   const { currentCompany } = useCompany();
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(propIsLoading || false);
+  const [data, setData] = useState<any>(customData || null);
 
-  // Simular carregamento de dados quando a empresa mudar
+  // Simular carregamento de dados quando a empresa mudar ou quando customData mudar
   useEffect(() => {
     loadData();
-  }, [currentCompany.id]);
+  }, [currentCompany.id, customData]);
+
+  // Atualizar o estado de carregamento quando a prop mudar
+  useEffect(() => {
+    if (propIsLoading !== undefined) {
+      setIsLoading(propIsLoading);
+    }
+  }, [propIsLoading]);
 
   const loadData = () => {
     setIsLoading(true);
+
+    // Se temos dados personalizados, usamos eles
+    if (customData) {
+      setData(customData);
+      setIsLoading(false);
+      return;
+    }
 
     // Simulação de carregamento de dados
     setTimeout(() => {

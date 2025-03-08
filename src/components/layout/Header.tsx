@@ -1,18 +1,8 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import {
-  Bell,
-  Search,
-  Settings,
-  HelpCircle,
-  Menu,
-  X,
-  Calendar,
-  MessageSquare,
-} from "lucide-react";
+import { Bell, Search, Settings, Menu, X, Calendar } from "lucide-react";
 import CompanySelector from "@/components/company/CompanySelector";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,9 +20,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import UserProfileDropdown from "@/components/user/UserProfileDropdown";
+import { DateRangePicker } from "@/components/calendar/DateRangePicker";
+import { useDateRange } from "@/context/DateRangeContext";
 
 interface HeaderProps {
-  onToggleSidebar?: () => void;
+  title?: string;
+  onMenuToggle?: () => void;
   className?: string;
   user?: {
     name: string;
@@ -49,7 +43,8 @@ interface HeaderProps {
 }
 
 const Header = ({
-  onToggleSidebar = () => {},
+  title = "Dashboard",
+  onMenuToggle = () => {},
   className,
   user = {
     name: "Admin Usuário",
@@ -82,6 +77,7 @@ const Header = ({
 }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const { dateRange, setDateRange } = useDateRange();
 
   const unreadNotificationsCount = notifications.filter(
     (notification) => !notification.read,
@@ -101,10 +97,15 @@ const Header = ({
             variant="ghost"
             size="icon"
             className="md:hidden mr-2"
-            onClick={onToggleSidebar}
+            onClick={onMenuToggle}
           >
             <Menu className="h-5 w-5" />
           </Button>
+
+          {/* Title - visible on larger screens */}
+          <h1 className="text-xl font-semibold hidden md:block mr-4">
+            {title}
+          </h1>
 
           {/* Company Selector */}
           <div className="mr-4">
@@ -155,41 +156,42 @@ const Header = ({
 
         {/* Right section with actions */}
         <div className="flex items-center space-x-1 md:space-x-3">
-          {/* Quick Actions */}
-          <div className="hidden md:flex space-x-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-slate-600"
-                  >
-                    <Calendar className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Calendário</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* Date Range Picker */}
+          <div className="hidden md:block">
+            <DateRangePicker
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
+          </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-slate-600"
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Mensagens</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* Calendar Icon for Mobile */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Calendar className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Calendário</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Selecionar Período</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <DateRangePicker
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                  />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Notifications */}
@@ -264,27 +266,15 @@ const Header = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Help */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <HelpCircle className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Ajuda</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
           {/* Settings */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
+                <Link to="/settings">
+                  <Button variant="ghost" size="icon">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </Link>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Configurações</p>
@@ -293,44 +283,12 @@ const Header = ({
           </TooltipProvider>
 
           {/* User Profile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="pl-2 pr-3 py-1.5 h-auto">
-                <div className="flex items-center">
-                  <Avatar className="h-8 w-8 mr-2">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium leading-none">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">{user.email}</p>
-                  </div>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link to="/profile" className="flex w-full">
-                  Perfil
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/settings" className="flex w-full">
-                  Configurações
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-500 focus:text-red-500 focus:bg-red-50">
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserProfileDropdown
+            user={user}
+            onProfileClick={() => (window.location.href = "/profile")}
+            onSettingsClick={() => (window.location.href = "/settings")}
+            onLogout={() => console.log("Logout clicked")}
+          />
         </div>
       </div>
     </header>
