@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar as CalendarIcon, Save, X } from "lucide-react";
+import { MonthYearPicker } from "@/components/calendar/MonthYearPicker";
+import { DatePickerWithPresets } from "@/components/calendar/DatePickerWithPresets";
 
 interface Activity {
   id: string;
@@ -58,21 +60,6 @@ export interface PaymentFormData {
   notes?: string;
 }
 
-const months = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
 const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
   employeeId,
   employeeName,
@@ -82,12 +69,10 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
   onCancel,
 }) => {
   const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
 
   const [formData, setFormData] = useState<PaymentFormData>({
     employeeId,
-    month: `${months[currentMonth]} ${currentYear}`,
+    month: "",
     date: currentDate,
     dueDate: new Date(currentDate.getTime() + 2 * 24 * 60 * 60 * 1000), // Default due date: 2 days from now
     baseSalary,
@@ -99,7 +84,16 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
     notes: "",
   });
 
+  const [referenceMonth, setReferenceMonth] = useState<Date>(new Date());
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Update month string when referenceMonth changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      month: format(referenceMonth, "MMMM yyyy", { locale: pt }),
+    }));
+  }, [referenceMonth]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -180,11 +174,11 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
             <Label htmlFor="month" className="font-medium">
               Mês de Referência <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="month"
-              name="month"
-              value={formData.month}
-              onChange={handleInputChange}
+            <MonthYearPicker
+              date={referenceMonth}
+              onDateChange={(date) => date && setReferenceMonth(date)}
+              showMonthOnly
+              placeholder="Selecione o mês de referência"
               className={errors.month ? "border-red-500" : ""}
             />
             {errors.month && (
@@ -196,31 +190,14 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
             <Label htmlFor="date" className="font-medium">
               Data de Pagamento <span className="text-red-500">*</span>
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={`w-full justify-start text-left font-normal ${errors.date ? "border-red-500" : ""}`}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.date ? (
-                    format(formData.date, "PPP", { locale: pt })
-                  ) : (
-                    <span>Selecione uma data</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) =>
-                    date && setFormData({ ...formData, date })
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePickerWithPresets
+              date={formData.date}
+              onDateChange={(date) =>
+                date && setFormData({ ...formData, date })
+              }
+              placeholder="Selecione a data de pagamento"
+              className={errors.date ? "border-red-500" : ""}
+            />
             {errors.date && (
               <p className="text-sm text-red-500">{errors.date}</p>
             )}
@@ -230,31 +207,14 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
             <Label htmlFor="dueDate" className="font-medium">
               Data de Vencimento <span className="text-red-500">*</span>
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={`w-full justify-start text-left font-normal ${errors.dueDate ? "border-red-500" : ""}`}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dueDate ? (
-                    format(formData.dueDate, "PPP", { locale: pt })
-                  ) : (
-                    <span>Selecione uma data</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.dueDate}
-                  onSelect={(date) =>
-                    date && setFormData({ ...formData, dueDate: date })
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePickerWithPresets
+              date={formData.dueDate}
+              onDateChange={(date) =>
+                date && setFormData({ ...formData, dueDate: date })
+              }
+              placeholder="Selecione a data de vencimento"
+              className={errors.dueDate ? "border-red-500" : ""}
+            />
             {errors.dueDate && (
               <p className="text-sm text-red-500">{errors.dueDate}</p>
             )}
@@ -286,9 +246,10 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
               type="number"
               min="0"
               step="0.01"
-              value={formData.baseSalary}
+              value={formData.baseSalary || ""}
               onChange={handleNumberInputChange}
               className={errors.baseSalary ? "border-red-500" : ""}
+              placeholder=""
             />
             {errors.baseSalary && (
               <p className="text-sm text-red-500">{errors.baseSalary}</p>
@@ -306,8 +267,9 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.bonus}
+                value={formData.bonus || ""}
                 onChange={handleNumberInputChange}
+                placeholder=""
               />
             </div>
 
@@ -321,8 +283,9 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.allowances}
+                value={formData.allowances || ""}
                 onChange={handleNumberInputChange}
+                placeholder=""
               />
             </div>
           </div>
@@ -338,8 +301,9 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.deductions}
+                value={formData.deductions || ""}
                 onChange={handleNumberInputChange}
+                placeholder=""
               />
             </div>
 
@@ -353,8 +317,9 @@ const NewPaymentForm: React.FC<NewPaymentFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.taxes}
+                value={formData.taxes || ""}
                 onChange={handleNumberInputChange}
+                placeholder=""
               />
             </div>
           </div>

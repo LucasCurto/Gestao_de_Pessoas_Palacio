@@ -1,76 +1,160 @@
 @tailwind base;
-  @tailwind components;
-  @tailwind utilities;
+@tailwind components;
+@tailwind utilities;
 
-  @layer base {
-    :root {
-      --background: 0 0% 100%;
-      --foreground: 222.2 84% 4.9%;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-      --card: 0 0% 100%;
-      --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-      --popover: 0 0% 100%;
-      --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-      --primary: 222.2 47.4% 11.2%;
-      --primary-foreground: 210 40% 98%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
-      --secondary: 210 40% 96.1%;
-      --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-      --muted: 210 40% 96.1%;
-      --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-      --accent: 210 40% 96.1%;
-      --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-      --destructive: 0 84.2% 60.2%;
-      --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-      --border: 214.3 31.8% 91.4%;
-      --input: 214.3 31.8% 91.4%;
-      --ring: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
 
-      --radius: 0.5rem;
-    }
+    --radius: 0.5rem;
 
-    .dark {
-      --background: 222.2 84% 4.9%;
-      --foreground: 210 40% 98%;
-
-      --card: 222.2 84% 4.9%;
-      --card-foreground: 210 40% 98%;
-
-      --popover: 222.2 84% 4.9%;
-      --popover-foreground: 210 40% 98%;
-
-      --primary: 210 40% 98%;
-      --primary-foreground: 222.2 47.4% 11.2%;
-
-      --secondary: 217.2 32.6% 17.5%;
-      --secondary-foreground: 210 40% 98%;
-
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-
-      --accent: 217.2 32.6% 17.5%;
-      --accent-foreground: 210 40% 98%;
-
-      --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 210 40% 98%;
-
-      --border: 217.2 32.6% 17.5%;
-      --input: 217.2 32.6% 17.5%;
-      --ring: 212.7 26.8% 83.9%;
-    }
+    --dashboard-density: comfortable;
+    --dashboard-theme: default;
   }
 
-  @layer base {
-    * {
-      @apply border-border;
-    }
-    body {
-      @apply bg-background text-foreground;
-    }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Dashboard Density Styles */
+.dashboard-density-compact .card-header,
+body.dashboard-density-compact .card-header {
+  padding: 0.5rem !important;
+}
+
+.dashboard-density-comfortable .card-header,
+body.dashboard-density-comfortable .card-header {
+  padding: 1rem !important;
+}
+
+.dashboard-density-spacious .card-header,
+body.dashboard-density-spacious .card-header {
+  padding: 1.5rem !important;
+}
+
+/* Dashboard Theme Styles */
+.dashboard-theme-dark,
+body.dashboard-theme-dark {
+  background-color: #1f2937 !important;
+  color: white !important;
+}
+
+.dashboard-theme-dark .card,
+body.dashboard-theme-dark .card {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: white !important;
+}
+
+.dashboard-theme-light,
+body.dashboard-theme-light {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+.dashboard-theme-light .card,
+body.dashboard-theme-light .card {
+  background-color: #f9fafb !important;
+  border-color: #e5e7eb !important;
+}
+
+.dashboard-theme-colorful,
+body.dashboard-theme-colorful {
+  background: linear-gradient(to bottom right, #f0f9ff, #f5f3ff) !important;
+}
+
+.dashboard-theme-colorful .card,
+body.dashboard-theme-colorful .card {
+  background: linear-gradient(to bottom right, #ebf5ff, #f5f3ff) !important;
+  border-color: #ddd6fe !important;
+}
+
+.dashboard-theme-default .card,
+body.dashboard-theme-default .card {
+  background-color: white !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Layout styles */
+body[data-layout="columns"] .dashboard-grid {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body[data-layout="masonry"] .dashboard-grid {
+  column-count: 1 !important;
+}
+
+@media (min-width: 768px) {
+  body[data-layout="masonry"] .dashboard-grid {
+    column-count: 2 !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  body[data-layout="masonry"] .dashboard-grid {
+    column-count: 3 !important;
+  }
+}

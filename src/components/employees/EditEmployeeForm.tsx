@@ -39,6 +39,7 @@ export interface EmployeeFormData {
   contractType: string;
   education: string;
   skills: string[];
+  baseSalary?: any;
 }
 
 interface EditEmployeeFormProps {
@@ -72,7 +73,10 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<EmployeeFormData>(employee);
+  const [formData, setFormData] = useState<EmployeeFormData>({
+    ...employee,
+    baseSalary: employee.baseSalary !== undefined ? employee.baseSalary : "",
+  });
   const [newSkill, setNewSkill] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -330,6 +334,19 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
             {errors.position && (
               <p className="text-sm text-red-500">{errors.position}</p>
             )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="baseSalary" className="font-medium">
+              Salário Base
+            </Label>
+            <Input
+              id="baseSalary"
+              name="baseSalary"
+              type="number"
+              value={formData.baseSalary}
+              onChange={handleInputChange}
+            />
           </div>
 
           <div className="grid gap-2">

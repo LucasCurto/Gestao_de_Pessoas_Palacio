@@ -11,7 +11,6 @@ import {
 import {
   LayoutDashboard,
   Users,
-  BookOpen,
   FileBarChart,
   Settings,
   Link2,
@@ -43,37 +42,33 @@ const Sidebar = ({
   className = "",
 }: SidebarProps) => {
   const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(collapsed);
 
   const navItems: NavItem[] = [
     {
       title: "Dashboard",
-      icon: <LayoutDashboard size={collapsed ? 20 : 18} />,
+      icon: <LayoutDashboard size={isCollapsed ? 20 : 18} />,
       path: "/",
     },
     {
       title: "Gestão de Funcionários",
-      icon: <Users size={collapsed ? 20 : 18} />,
+      icon: <Users size={isCollapsed ? 20 : 18} />,
       path: "/employees",
       badge: { count: 2, variant: "secondary" },
     },
     {
-      title: "Motor de Regras",
-      icon: <BookOpen size={collapsed ? 20 : 18} />,
-      path: "/rules",
-    },
-    {
       title: "Sistema de Relatórios",
-      icon: <FileBarChart size={collapsed ? 20 : 18} />,
+      icon: <FileBarChart size={isCollapsed ? 20 : 18} />,
       path: "/reports",
     },
     {
       title: "Configurações",
-      icon: <Settings size={collapsed ? 20 : 18} />,
+      icon: <Settings size={isCollapsed ? 20 : 18} />,
       path: "/settings",
     },
     {
       title: "Integrações",
-      icon: <Link2 size={collapsed ? 20 : 18} />,
+      icon: <Link2 size={isCollapsed ? 20 : 18} />,
       path: "/integrations",
       badge: { count: 1, variant: "destructive" },
     },
@@ -85,16 +80,21 @@ const Sidebar = ({
     );
   };
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+    onToggleCollapse();
+  };
+
   return (
     <aside
       className={cn(
         "bg-white border-r border-gray-200 h-full transition-all duration-300 flex flex-col",
-        collapsed ? "w-[70px]" : "w-[280px]",
+        isCollapsed ? "w-[70px]" : "w-[280px]",
         className,
       )}
     >
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="flex items-center">
             <div className="h-8 w-8 bg-blue-600 rounded-md flex items-center justify-center">
               <span className="text-white font-bold text-lg">P</span>
@@ -104,7 +104,7 @@ const Sidebar = ({
             </h2>
           </div>
         )}
-        {collapsed && (
+        {isCollapsed && (
           <div className="h-8 w-8 bg-blue-600 rounded-md flex items-center justify-center mx-auto">
             <span className="text-white font-bold text-lg">P</span>
           </div>
@@ -113,9 +113,9 @@ const Sidebar = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
-          onClick={onToggleCollapse}
+          onClick={toggleCollapse}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
       </div>
 
@@ -133,16 +133,16 @@ const Sidebar = ({
                         isActive(item.path)
                           ? "bg-blue-50 text-blue-700"
                           : "text-gray-700 hover:bg-gray-100",
-                        collapsed && "justify-center",
+                        isCollapsed && "justify-center",
                       )}
                     >
-                      <span className={cn("mr-3", collapsed && "mr-0")}>
+                      <span className={cn("mr-3", isCollapsed && "mr-0")}>
                         {item.icon}
                       </span>
-                      {!collapsed && (
+                      {!isCollapsed && (
                         <span className="font-medium">{item.title}</span>
                       )}
-                      {item.badge && !collapsed && (
+                      {item.badge && !isCollapsed && (
                         <span
                           className={cn(
                             "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
@@ -156,7 +156,7 @@ const Sidebar = ({
                       )}
                     </Link>
                   </TooltipTrigger>
-                  {collapsed && (
+                  {isCollapsed && (
                     <TooltipContent side="right">{item.title}</TooltipContent>
                   )}
                 </Tooltip>
@@ -168,7 +168,7 @@ const Sidebar = ({
 
       <div className="mt-auto border-t border-gray-200 p-4">
         <div className="space-y-3">
-          {!collapsed && (
+          {!isCollapsed && (
             <div className="bg-blue-50 rounded-md p-3">
               <p className="text-xs text-blue-700 font-medium">
                 Precisa de ajuda?
@@ -194,14 +194,16 @@ const Sidebar = ({
                   variant="ghost"
                   className={cn(
                     "w-full flex items-center text-red-600 hover:bg-red-50 hover:text-red-700",
-                    collapsed && "justify-center",
+                    isCollapsed && "justify-center",
                   )}
                 >
-                  <LogOut size={collapsed ? 20 : 16} className="mr-2" />
-                  {!collapsed && <span>Sair</span>}
+                  <LogOut size={isCollapsed ? 20 : 16} className="mr-2" />
+                  {!isCollapsed && <span>Sair</span>}
                 </Button>
               </TooltipTrigger>
-              {collapsed && <TooltipContent side="right">Sair</TooltipContent>}
+              {isCollapsed && (
+                <TooltipContent side="right">Sair</TooltipContent>
+              )}
             </Tooltip>
           </TooltipProvider>
         </div>

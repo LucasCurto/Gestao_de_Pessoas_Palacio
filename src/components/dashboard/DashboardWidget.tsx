@@ -22,6 +22,7 @@ import {
   Maximize2,
   RefreshCw,
   Settings,
+  Trash2,
 } from "lucide-react";
 
 interface DashboardWidgetProps {
@@ -40,6 +41,7 @@ interface DashboardWidgetProps {
   onSettings?: () => void;
   onMaximize?: () => void;
   onExport?: (format: string) => void;
+  onDelete?: () => void;
   isLoading?: boolean;
   customData?: any;
 }
@@ -56,6 +58,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   onSettings,
   onMaximize,
   onExport,
+  onDelete,
   isLoading: propIsLoading,
   customData,
 }) => {
@@ -176,7 +179,52 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   };
 
   return (
-    <Card className={`overflow-hidden ${className}`}>
+    <Card
+      className={`overflow-hidden ${className} ${(() => {
+        // Aplicar densidade com base nas configurações salvas
+        const savedConfig = localStorage.getItem("dashboardConfig");
+        if (savedConfig) {
+          try {
+            const config = JSON.parse(savedConfig);
+            switch (config.density) {
+              case "compact":
+                return "p-1 dashboard-density-compact";
+              case "spacious":
+                return "p-6 dashboard-density-spacious";
+              case "comfortable":
+              default:
+                return "dashboard-density-comfortable";
+            }
+          } catch (e) {
+            console.error("Erro ao aplicar densidade:", e);
+          }
+        }
+        return "";
+      })()} ${(() => {
+        // Aplicar tema com base nas configurações salvas
+        const savedConfig = localStorage.getItem("dashboardConfig");
+        if (savedConfig) {
+          try {
+            const config = JSON.parse(savedConfig);
+            switch (config.theme) {
+              case "dark":
+                return "bg-gray-800 text-white dashboard-theme-dark";
+              case "light":
+                return "bg-white text-gray-800 dashboard-theme-light";
+              case "colorful":
+                return "bg-gradient-to-br from-blue-50 to-purple-50 dashboard-theme-colorful";
+              case "default":
+              default:
+                return "dashboard-theme-default";
+            }
+          } catch (e) {
+            console.error("Erro ao aplicar tema:", e);
+          }
+        }
+        return "";
+      })()}`}
+      key={`widget-${id}-${Date.now()}`} // Forçar re-renderização com key dinâmica
+    >
       <CardHeader className="p-3 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           {getWidgetIcon()}
@@ -186,14 +234,18 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-7 w-7 hover:bg-gray-100"
             onClick={handleRefresh}
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-gray-100"
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -204,10 +256,22 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
                 <Maximize2 className="h-4 w-4 mr-2" />
                 Maximizar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSettings && onSettings()}>
-                <Settings className="h-4 w-4 mr-2" />
+              <DropdownMenuItem
+                onClick={() => onSettings && onSettings()}
+                className="hover:bg-blue-50"
+              >
+                <Settings className="h-4 w-4 mr-2 text-blue-600" />
                 Configurações
               </DropdownMenuItem>
+              {onDelete && (
+                <DropdownMenuItem
+                  onClick={() => onDelete()}
+                  className="text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Widget
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onExport && onExport("image")}>
                 <Download className="h-4 w-4 mr-2" />

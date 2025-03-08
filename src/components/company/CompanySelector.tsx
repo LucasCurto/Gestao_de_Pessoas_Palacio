@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useCompany } from "@/context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Building, ChevronDown, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCompany } from "@/context/CompanyContext";
 
 interface CompanySelectorProps {}
 

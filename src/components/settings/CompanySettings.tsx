@@ -13,7 +13,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Save, Upload } from "lucide-react";
+import { Calendar as CalendarIcon, Save, Upload, X, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface CompanyData {
   name: string;
@@ -315,15 +324,41 @@ const CompanySettings = () => {
             <CardContent className="space-y-4">
               <div className="flex justify-center p-6 border-2 border-dashed rounded-md">
                 {companyData.logo ? (
-                  <img
-                    src={companyData.logo}
-                    alt="Logo da empresa"
-                    className="max-h-40 object-contain"
-                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={companyData.logo}
+                      alt="Logo da empresa"
+                      className="max-h-40 object-contain"
+                    />
+                    <Button variant="outline" size="sm">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Alterar Logo
+                    </Button>
+                  </div>
                 ) : (
                   <div className="text-center">
                     <p className="text-gray-500 mb-2">Nenhum logo carregado</p>
-                    <Button variant="outline">
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Normalmente aqui você faria upload para um servidor
+                          // Para demonstração, vamos usar URL.createObjectURL
+                          const logoUrl = URL.createObjectURL(file);
+                          setCompanyData({ ...companyData, logo: logoUrl });
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        document.getElementById("logo-upload")?.click()
+                      }
+                    >
                       <Upload className="mr-2 h-4 w-4" />
                       Carregar Logo
                     </Button>
@@ -344,9 +379,68 @@ const CompanySettings = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <p className="font-medium">Feriados Nacionais</p>
-                  <Button variant="outline" size="sm">
-                    Configurar
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Configurar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Feriados Nacionais</DialogTitle>
+                        <DialogDescription>
+                          Configure os feriados nacionais para o ano atual.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                        {[
+                          { date: "2023-01-01", name: "Ano Novo" },
+                          { date: "2023-04-07", name: "Sexta-feira Santa" },
+                          { date: "2023-04-25", name: "Dia da Liberdade" },
+                          { date: "2023-05-01", name: "Dia do Trabalhador" },
+                          { date: "2023-06-10", name: "Dia de Portugal" },
+                          {
+                            date: "2023-08-15",
+                            name: "Assunção de Nossa Senhora",
+                          },
+                          {
+                            date: "2023-10-05",
+                            name: "Implantação da República",
+                          },
+                          {
+                            date: "2023-11-01",
+                            name: "Dia de Todos os Santos",
+                          },
+                          {
+                            date: "2023-12-01",
+                            name: "Restauração da Independência",
+                          },
+                          { date: "2023-12-08", name: "Imaculada Conceição" },
+                          { date: "2023-12-25", name: "Natal" },
+                        ].map((holiday, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
+                            <div>
+                              <p className="font-medium">{holiday.name}</p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(holiday.date).toLocaleDateString(
+                                  "pt-PT",
+                                )}
+                              </p>
+                            </div>
+                            <Button variant="ghost" size="sm">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <DialogFooter>
+                        <Button>Salvar Alterações</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <p className="text-sm text-gray-500">
                   Feriados nacionais portugueses são aplicados automaticamente.
@@ -358,9 +452,57 @@ const CompanySettings = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <p className="font-medium">Feriados Municipais</p>
-                  <Button variant="outline" size="sm">
-                    Adicionar
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Adicionar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Adicionar Feriado Municipal</DialogTitle>
+                        <DialogDescription>
+                          Adicione feriados específicos da sua localidade.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="holiday-name">Nome do Feriado</Label>
+                          <Input
+                            id="holiday-name"
+                            placeholder="Ex: Santo António"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="holiday-date">Data</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                Selecione uma data
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar mode="single" initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="holiday-location">Localidade</Label>
+                          <Input
+                            id="holiday-location"
+                            placeholder="Ex: Lisboa"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button>Adicionar Feriado</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <p className="text-sm text-gray-500">
                   Adicione feriados municipais específicos da sua localidade.
@@ -372,9 +514,62 @@ const CompanySettings = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <p className="font-medium">Dias Especiais da Empresa</p>
-                  <Button variant="outline" size="sm">
-                    Adicionar
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Adicionar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Adicionar Dia Especial</DialogTitle>
+                        <DialogDescription>
+                          Defina dias especiais como aniversário da empresa,
+                          eventos corporativos, etc.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="special-day-name">
+                            Nome do Evento
+                          </Label>
+                          <Input
+                            id="special-day-name"
+                            placeholder="Ex: Aniversário da Empresa"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="special-day-date">Data</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                Selecione uma data
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar mode="single" initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="special-day-description">
+                            Descrição
+                          </Label>
+                          <Textarea
+                            id="special-day-description"
+                            placeholder="Descrição do evento"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button>Adicionar Evento</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <p className="text-sm text-gray-500">
                   Defina dias especiais como aniversário da empresa, eventos

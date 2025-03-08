@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useCompany } from "@/context/CompanyContext";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EnhancedDateRangePicker } from "@/components/calendar/EnhancedDateRangePicker";
+import { DateRange } from "react-day-picker";
 import {
   Select,
   SelectContent,
@@ -19,516 +20,476 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  BarChart,
-  FileText,
-  Download,
-  Filter,
-  Calendar,
-  Printer,
-  Mail,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { format, addMonths } from "date-fns";
+import { pt } from "date-fns/locale";
+import { Download, FileText, BarChart, PieChart, Filter } from "lucide-react";
 
-interface PaymentReportProps {
-  companyId?: string;
-  period?: string;
-  department?: string;
-}
+const PaymentReport = () => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addMonths(new Date(), -1),
+    to: new Date(),
+  });
+  const [employeeFilter, setEmployeeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-interface PaymentSummary {
-  id: string;
-  period: string;
-  department: string;
-  employeeCount: number;
-  totalSalaries: number;
-  totalBonuses: number;
-  totalAllowances: number;
-  totalDeductions: number;
-  totalTaxes: number;
-  netTotal: number;
-  companyId: string;
-}
+  // Mock data for payments
+  const payments = [
+    {
+      id: "1",
+      employeeId: "emp1",
+      employeeName: "João Silva",
+      month: "Maio 2023",
+      date: new Date(2023, 4, 25),
+      baseSalary: 2500,
+      activities: 3,
+      activitiesValue: 250,
+      bonus: 100,
+      deductions: 150,
+      taxes: 500,
+      total: 2200,
+      status: "paid",
+    },
+    {
+      id: "2",
+      employeeId: "emp2",
+      employeeName: "Maria Santos",
+      month: "Maio 2023",
+      date: new Date(2023, 4, 25),
+      baseSalary: 2800,
+      activities: 2,
+      activitiesValue: 180,
+      bonus: 0,
+      deductions: 120,
+      taxes: 550,
+      total: 2310,
+      status: "paid",
+    },
+    {
+      id: "3",
+      employeeId: "emp3",
+      employeeName: "Ana Oliveira",
+      month: "Maio 2023",
+      date: new Date(2023, 4, 25),
+      baseSalary: 2200,
+      activities: 1,
+      activitiesValue: 80,
+      bonus: 50,
+      deductions: 100,
+      taxes: 450,
+      total: 1780,
+      status: "paid",
+    },
+    {
+      id: "4",
+      employeeId: "emp1",
+      employeeName: "João Silva",
+      month: "Junho 2023",
+      date: new Date(2023, 5, 25),
+      baseSalary: 2500,
+      activities: 5,
+      activitiesValue: 350,
+      bonus: 200,
+      deductions: 150,
+      taxes: 550,
+      total: 2350,
+      status: "pending",
+    },
+    {
+      id: "5",
+      employeeId: "emp2",
+      employeeName: "Maria Santos",
+      month: "Junho 2023",
+      date: new Date(2023, 5, 25),
+      baseSalary: 2800,
+      activities: 3,
+      activitiesValue: 240,
+      bonus: 100,
+      deductions: 120,
+      taxes: 580,
+      total: 2440,
+      status: "paid",
+    },
+  ];
 
-const PaymentReport: React.FC<PaymentReportProps> = ({
-  companyId: propCompanyId,
-  period: propPeriod,
-  department: propDepartment,
-}) => {
-  const { currentCompany } = useCompany();
-  const [period, setPeriod] = useState(propPeriod || "2023-06");
-  const [department, setDepartment] = useState(propDepartment || "Todos");
-  const [reportData, setReportData] = useState<PaymentSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
-  const [availableDepartments, setAvailableDepartments] = useState<string[]>(
-    [],
+  // Filter payments based on selected filters
+  const filteredPayments = payments.filter((payment) => {
+    // Date range filter
+    if (
+      dateRange?.from &&
+      dateRange?.to &&
+      (payment.date < dateRange.from || payment.date > dateRange.to)
+    ) {
+      return false;
+    }
+
+    // Employee filter
+    if (employeeFilter !== "all" && payment.employeeId !== employeeFilter) {
+      return false;
+    }
+
+    // Status filter
+    if (statusFilter !== "all" && payment.status !== statusFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Calculate summary statistics
+  const totalPayments = filteredPayments.length;
+  const totalAmount = filteredPayments.reduce(
+    (sum, payment) => sum + payment.total,
+    0,
+  );
+  const totalBaseSalary = filteredPayments.reduce(
+    (sum, payment) => sum + payment.baseSalary,
+    0,
+  );
+  const totalActivitiesValue = filteredPayments.reduce(
+    (sum, payment) => sum + payment.activitiesValue,
+    0,
+  );
+  const totalBonus = filteredPayments.reduce(
+    (sum, payment) => sum + payment.bonus,
+    0,
+  );
+  const totalDeductions = filteredPayments.reduce(
+    (sum, payment) => sum + payment.deductions,
+    0,
+  );
+  const totalTaxes = filteredPayments.reduce(
+    (sum, payment) => sum + payment.taxes,
+    0,
   );
 
-  // Dados de exemplo por empresa
-  const reportsByCompany: Record<string, PaymentSummary[]> = {
-    "1": [
-      {
-        id: "report-1-1",
-        period: "2023-06",
-        department: "Todos",
-        employeeCount: 50,
-        totalSalaries: 125000,
-        totalBonuses: 18750,
-        totalAllowances: 15000,
-        totalDeductions: 12500,
-        totalTaxes: 37500,
-        netTotal: 108750,
-        companyId: "1",
-      },
-      {
-        id: "report-1-2",
-        period: "2023-06",
-        department: "Recursos Humanos",
-        employeeCount: 8,
-        totalSalaries: 20000,
-        totalBonuses: 3000,
-        totalAllowances: 2400,
-        totalDeductions: 2000,
-        totalTaxes: 6000,
-        netTotal: 17400,
-        companyId: "1",
-      },
-      {
-        id: "report-1-3",
-        period: "2023-06",
-        department: "Financeiro",
-        employeeCount: 12,
-        totalSalaries: 30000,
-        totalBonuses: 4500,
-        totalAllowances: 3600,
-        totalDeductions: 3000,
-        totalTaxes: 9000,
-        netTotal: 26100,
-        companyId: "1",
-      },
-      {
-        id: "report-1-4",
-        period: "2023-05",
-        department: "Todos",
-        employeeCount: 48,
-        totalSalaries: 120000,
-        totalBonuses: 18000,
-        totalAllowances: 14400,
-        totalDeductions: 12000,
-        totalTaxes: 36000,
-        netTotal: 104400,
-        companyId: "1",
-      },
-    ],
-    "2": [
-      {
-        id: "report-2-1",
-        period: "2023-06",
-        department: "Todos",
-        employeeCount: 20,
-        totalSalaries: 64000,
-        totalBonuses: 7680,
-        totalAllowances: 6400,
-        totalDeductions: 5120,
-        totalTaxes: 19200,
-        netTotal: 53760,
-        companyId: "2",
-      },
-      {
-        id: "report-2-2",
-        period: "2023-06",
-        department: "Vendas",
-        employeeCount: 8,
-        totalSalaries: 25600,
-        totalBonuses: 3840,
-        totalAllowances: 2560,
-        totalDeductions: 2048,
-        totalTaxes: 7680,
-        netTotal: 22272,
-        companyId: "2",
-      },
-      {
-        id: "report-2-3",
-        period: "2023-05",
-        department: "Todos",
-        employeeCount: 18,
-        totalSalaries: 57600,
-        totalBonuses: 6912,
-        totalAllowances: 5760,
-        totalDeductions: 4608,
-        totalTaxes: 17280,
-        netTotal: 48384,
-        companyId: "2",
-      },
-    ],
-  };
+  // Get unique employees for filter
+  const employees = Array.from(
+    new Set(
+      payments.map((payment) => ({
+        id: payment.employeeId,
+        name: payment.employeeName,
+      })),
+    ),
+  );
 
-  // Carregar dados do relatório quando a empresa, período ou departamento mudar
-  useEffect(() => {
-    setIsLoading(true);
-
-    // Determinar o ID da empresa a ser usada
-    const targetCompanyId = propCompanyId || currentCompany.id;
-
-    // Obter relatórios para a empresa selecionada
-    // @ts-ignore - Ignorando o erro de índice para simplificar
-    const companyReports = reportsByCompany[targetCompanyId] || [];
-
-    // Extrair períodos e departamentos disponíveis
-    const periods = [...new Set(companyReports.map((report) => report.period))]
-      .sort()
-      .reverse();
-    const departments = [
-      "Todos",
-      ...new Set(
-        companyReports
-          .filter((report) => report.department !== "Todos")
-          .map((report) => report.department),
-      ),
-    ];
-
-    setAvailablePeriods(periods);
-    setAvailableDepartments(departments);
-
-    // Encontrar o relatório correspondente ao período e departamento selecionados
-    const selectedReport = companyReports.find(
-      (report) => report.period === period && report.department === department,
-    );
-
-    // Se não encontrar o relatório exato, tentar encontrar um para "Todos" os departamentos
-    const fallbackReport = companyReports.find(
-      (report) => report.period === period && report.department === "Todos",
-    );
-
-    setReportData(selectedReport || fallbackReport || null);
-    setIsLoading(false);
-  }, [currentCompany.id, propCompanyId, period, department]);
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString("pt-PT", {
-      style: "currency",
-      currency: "EUR",
-    });
-  };
-
-  const formatPeriod = (periodStr: string) => {
-    const [year, month] = periodStr.split("-");
-    const monthNames = [
-      "Janeiro",
-      "Fevereiro",
-      "Março",
-      "Abril",
-      "Maio",
-      "Junho",
-      "Julho",
-      "Agosto",
-      "Setembro",
-      "Outubro",
-      "Novembro",
-      "Dezembro",
-    ];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
-  };
-
-  const handleExportPDF = () => {
-    alert("Exportando relatório em PDF...");
-    // Implementação real usaria uma biblioteca como jsPDF ou chamaria uma API
-  };
-
-  const handleExportExcel = () => {
-    alert("Exportando relatório em Excel...");
-    // Implementação real usaria uma biblioteca como xlsx ou chamaria uma API
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleSendEmail = () => {
-    alert("Enviando relatório por email...");
-    // Implementação real abriria um modal para configurar o email ou chamaria uma API
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-50 text-green-700 border-green-200"
+          >
+            Pago
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-50 text-yellow-700 border-yellow-200"
+          >
+            Pendente
+          </Badge>
+        );
+      case "processing":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 text-blue-700 border-blue-200"
+          >
+            Em Processamento
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Relatório de Pagamentos</h2>
-          <p className="text-gray-500">
-            Resumo de pagamentos por período e departamento
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportPDF}>
-            <FileText className="h-4 w-4 mr-2" />
-            PDF
-          </Button>
-          <Button variant="outline" onClick={handleExportExcel}>
-            <Download className="h-4 w-4 mr-2" />
-            Excel
-          </Button>
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir
-          </Button>
-          <Button variant="outline" onClick={handleSendEmail}>
-            <Mail className="h-4 w-4 mr-2" />
-            Email
-          </Button>
-        </div>
-      </div>
-
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <CardTitle>Filtros do Relatório</CardTitle>
-          </div>
+        <CardHeader>
+          <CardTitle>Relatório de Pagamentos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="space-y-2">
-              <Label htmlFor="period">Período</Label>
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger id="period" className="w-full">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Selecione o período" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePeriods.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {formatPeriod(p)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="department">Departamento</Label>
-              <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger id="department" className="w-full">
-                  <div className="flex items-center">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Selecione o departamento" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDepartments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
-              <Input
-                id="company"
-                value={currentCompany.name}
-                disabled
-                className="bg-gray-50"
+              <Label>Período</Label>
+              <EnhancedDateRangePicker
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                showCompactPresets
               />
             </div>
+            <div className="space-y-2">
+              <Label>Funcionário</Label>
+              <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os funcionários" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os funcionários</SelectItem>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="paid">Pago</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="processing">Em Processamento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <p>Carregando relatório...</p>
-        </div>
-      ) : reportData ? (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Resumo de Pagamentos - {formatPeriod(reportData.period)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">
-                      Total Líquido
-                    </h3>
-                    <p className="text-3xl font-bold text-green-600">
-                      {formatCurrency(reportData.netTotal)}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">
-                      Funcionários
-                    </h3>
-                    <p className="text-3xl font-bold">
-                      {reportData.employeeCount}
-                    </p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-700">
+                Total de Pagamentos
+              </h3>
+              <p className="text-2xl font-bold text-blue-800 mt-1">
+                {totalPayments}
+              </p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-green-700">
+                Valor Total
+              </h3>
+              <p className="text-2xl font-bold text-green-800 mt-1">
+                {totalAmount.toFixed(2)}€
+              </p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-purple-700">
+                Salários Base
+              </h3>
+              <p className="text-2xl font-bold text-purple-800 mt-1">
+                {totalBaseSalary.toFixed(2)}€
+              </p>
+            </div>
+            <div className="bg-amber-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-amber-700">Atividades</h3>
+              <p className="text-2xl font-bold text-amber-800 mt-1">
+                {totalActivitiesValue.toFixed(2)}€
+              </p>
+            </div>
+          </div>
 
-                <div className="md:col-span-2">
-                  <div className="bg-gray-50 p-4 rounded-lg h-full">
-                    <h3 className="text-sm font-medium mb-4">
-                      Distribuição de Pagamentos
-                    </h3>
-                    <div className="flex items-center justify-center h-[200px]">
-                      <BarChart className="h-32 w-32 text-gray-300" />
-                      <p className="text-gray-500 ml-4">
-                        Gráfico de distribuição de pagamentos por categoria
-                      </p>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Detalhes dos Pagamentos</h3>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <BarChart className="h-4 w-4 mr-2" />
+                Gráfico
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Importar dinamicamente para evitar problemas de SSR
+                  import("../reports/ExportUtils").then(
+                    ({ exportToExcel, formatPaymentsForExport }) => {
+                      const formattedData =
+                        formatPaymentsForExport(filteredPayments);
+                      exportToExcel(formattedData, "Relatório_Pagamentos");
+                    },
+                  );
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Importar dinamicamente para evitar problemas de SSR
+                  import("../reports/ExportUtils").then(
+                    ({ exportToPDF, formatPaymentsForExport }) => {
+                      const formattedData =
+                        formatPaymentsForExport(filteredPayments);
+                      const columns = [
+                        "Data",
+                        "Mês",
+                        "Funcionário",
+                        "Salário Base",
+                        "Total",
+                        "Status",
+                        "Método de Pagamento",
+                      ];
+                      exportToPDF(
+                        formattedData,
+                        columns,
+                        "Relatório_Pagamentos",
+                        "Relatório de Pagamentos",
+                      );
+                    },
+                  );
+                }}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Funcionário</TableHead>
+                  <TableHead>Mês</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Salário Base</TableHead>
+                  <TableHead>Atividades</TableHead>
+                  <TableHead>Bónus</TableHead>
+                  <TableHead>Deduções</TableHead>
+                  <TableHead>Impostos</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPayments.length > 0 ? (
+                  filteredPayments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>{payment.employeeName}</TableCell>
+                      <TableCell>{payment.month}</TableCell>
+                      <TableCell>
+                        {format(payment.date, "dd/MM/yyyy", { locale: pt })}
+                      </TableCell>
+                      <TableCell>{payment.baseSalary.toFixed(2)}€</TableCell>
+                      <TableCell>
+                        {payment.activitiesValue.toFixed(2)}€
+                      </TableCell>
+                      <TableCell>{payment.bonus.toFixed(2)}€</TableCell>
+                      <TableCell className="text-red-600">
+                        -{payment.deductions.toFixed(2)}€
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        -{payment.taxes.toFixed(2)}€
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {payment.total.toFixed(2)}€
+                      </TableCell>
+                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={10}
+                      className="text-center py-4 text-gray-500"
+                    >
+                      Nenhum pagamento encontrado para os filtros selecionados
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-lg font-medium mb-4">Resumo de Pagamentos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-md border p-4">
+                <h4 className="text-sm font-medium mb-3">
+                  Distribuição por Componente
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Salário Base</span>
+                      <span>{totalBaseSalary.toFixed(2)}€</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full"
+                        style={{
+                          width: `${(totalBaseSalary / (totalBaseSalary + totalActivitiesValue + totalBonus)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Atividades</span>
+                      <span>{totalActivitiesValue.toFixed(2)}€</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-amber-600 h-2.5 rounded-full"
+                        style={{
+                          width: `${(totalActivitiesValue / (totalBaseSalary + totalActivitiesValue + totalBonus)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Bónus</span>
+                      <span>{totalBonus.toFixed(2)}€</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-green-600 h-2.5 rounded-full"
+                        style={{
+                          width: `${(totalBonus / (totalBaseSalary + totalActivitiesValue + totalBonus)) * 100}%`,
+                        }}
+                      ></div>
                     </div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalhamento de Valores</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">% do Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Salários Base</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(reportData.totalSalaries)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.totalSalaries /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Bónus</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(reportData.totalBonuses)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.totalBonuses /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Subsídios</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(reportData.totalAllowances)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.totalAllowances /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total Bruto</TableCell>
-                    <TableCell className="text-right font-bold">
-                      {formatCurrency(
-                        reportData.totalSalaries +
-                          reportData.totalBonuses +
-                          reportData.totalAllowances,
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">100%</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-red-600">
-                      Deduções
-                    </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      -{formatCurrency(reportData.totalDeductions)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.totalDeductions /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium text-red-600">
-                      Impostos
-                    </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      -{formatCurrency(reportData.totalTaxes)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.totalTaxes /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                  <TableRow className="bg-gray-50">
-                    <TableCell className="font-bold">Total Líquido</TableCell>
-                    <TableCell className="text-right font-bold text-green-600">
-                      {formatCurrency(reportData.netTotal)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        (reportData.netTotal /
-                          (reportData.totalSalaries +
-                            reportData.totalBonuses +
-                            reportData.totalAllowances)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-500 mb-2">
-              Nenhum dado disponível para o período e departamento selecionados.
-            </p>
-            <p className="text-sm text-gray-400">
-              Tente selecionar outro período ou departamento.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+              <div className="rounded-md border p-4">
+                <h4 className="text-sm font-medium mb-3">
+                  Distribuição por Funcionário
+                </h4>
+                <div className="space-y-3">
+                  {employees.map((employee) => {
+                    const employeePayments = filteredPayments.filter(
+                      (p) => p.employeeId === employee.id,
+                    );
+                    const employeeTotal = employeePayments.reduce(
+                      (sum, p) => sum + p.total,
+                      0,
+                    );
+                    return (
+                      <div key={employee.id}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>{employee.name}</span>
+                          <span>{employeeTotal.toFixed(2)}€</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className="bg-purple-600 h-2.5 rounded-full"
+                            style={{
+                              width: `${(employeeTotal / totalAmount) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

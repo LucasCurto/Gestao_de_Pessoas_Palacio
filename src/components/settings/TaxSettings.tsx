@@ -174,8 +174,37 @@ const mockIrsBrackets: TaxBracket[] = [
 ];
 
 const TaxSettings = () => {
-  const [taxRates, setTaxRates] = useState<TaxRate[]>(mockTaxRates);
-  const [irsBrackets, setIrsBrackets] = useState<TaxBracket[]>(mockIrsBrackets);
+  const [taxRates, setTaxRates] = useState<{
+    irs: any;
+    ss_employee: any;
+    ss_employer: any;
+    vat: any;
+  }>({
+    irs: "",
+    ss_employee: "",
+    ss_employer: "",
+    vat: "",
+  });
+
+  const [thresholds, setThresholds] = useState<
+    Array<{
+      id: string;
+      min: any;
+      max: number | null;
+      rate: any;
+    }>
+  >([
+    { id: "1", min: "", max: 7479, rate: "" },
+    { id: "2", min: 7480, max: 11284, rate: "" },
+    { id: "3", min: 11285, max: 15992, rate: "" },
+    { id: "4", min: 15993, max: 20700, rate: "" },
+    { id: "5", min: 20701, max: 26355, rate: "" },
+    { id: "6", min: 26356, max: 38632, rate: "" },
+    { id: "7", min: 38633, max: 50483, rate: "" },
+    { id: "8", min: 50484, max: 78834, rate: "" },
+    { id: "9", min: 78835, max: null, rate: "" },
+  ]);
+
   const [isAddTaxRateDialogOpen, setIsAddTaxRateDialogOpen] = useState(false);
   const [isAddBracketDialogOpen, setIsAddBracketDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"rates" | "brackets">("rates");
@@ -191,11 +220,14 @@ const TaxSettings = () => {
     applicableFrom: new Date().toISOString().split("T")[0],
   });
 
-  const [newBracket, setNewBracket] = useState<Omit<TaxBracket, "id">>({
-    minValue: 0,
-    maxValue: undefined,
-    rate: 0,
-    description: "",
+  const [newThreshold, setNewThreshold] = useState<{
+    min: any;
+    max: any;
+    rate: any;
+  }>({
+    min: "",
+    max: "",
+    rate: "",
   });
 
   const handleAddTaxRate = () => {
@@ -223,17 +255,12 @@ const TaxSettings = () => {
     };
 
     // Sort brackets by minValue after adding the new one
-    const updatedBrackets = [...irsBrackets, newBracketObj].sort(
+    const updatedBrackets = [...thresholds, newBracketObj].sort(
       (a, b) => a.minValue - b.minValue,
     );
 
-    setIrsBrackets(updatedBrackets);
-    setNewBracket({
-      minValue: 0,
-      maxValue: undefined,
-      rate: 0,
-      description: "",
-    });
+    setThresholds(updatedBrackets);
+    setNewThreshold({ min: "", max: "", rate: "" });
     setIsAddBracketDialogOpen(false);
   };
 
@@ -245,7 +272,7 @@ const TaxSettings = () => {
 
   const handleDeleteBracket = (id: string) => {
     if (confirm("Tem certeza que deseja remover este escalão?")) {
-      setIrsBrackets(irsBrackets.filter((bracket) => bracket.id !== id));
+      setThresholds(thresholds.filter((bracket) => bracket.id !== id));
     }
   };
 
@@ -317,7 +344,7 @@ const TaxSettings = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {taxRates.map((tax) => (
+                {mockTaxRates.map((tax) => (
                   <TableRow key={tax.id}>
                     <TableCell className="font-medium">{tax.name}</TableCell>
                     <TableCell>
@@ -395,7 +422,7 @@ const TaxSettings = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {irsBrackets.map((bracket, index) => (
+                {mockIrsBrackets.map((bracket, index) => (
                   <TableRow key={bracket.id}>
                     <TableCell className="font-medium">
                       {index + 1}º Escalão
@@ -576,11 +603,11 @@ const TaxSettings = () => {
                 id="bracket-min"
                 type="number"
                 step="0.01"
-                value={newBracket.minValue}
+                value={newThreshold.min}
                 onChange={(e) =>
-                  setNewBracket({
-                    ...newBracket,
-                    minValue: parseFloat(e.target.value) || 0,
+                  setNewThreshold({
+                    ...newThreshold,
+                    min: parseFloat(e.target.value) || 0,
                   })
                 }
               />
@@ -594,11 +621,11 @@ const TaxSettings = () => {
                 id="bracket-max"
                 type="number"
                 step="0.01"
-                value={newBracket.maxValue || ""}
+                value={newThreshold.max || ""}
                 onChange={(e) =>
-                  setNewBracket({
-                    ...newBracket,
-                    maxValue: e.target.value
+                  setNewThreshold({
+                    ...newThreshold,
+                    max: e.target.value
                       ? parseFloat(e.target.value)
                       : undefined,
                   })
@@ -612,10 +639,10 @@ const TaxSettings = () => {
                 id="bracket-rate"
                 type="number"
                 step="0.01"
-                value={newBracket.rate}
+                value={newThreshold.rate}
                 onChange={(e) =>
-                  setNewBracket({
-                    ...newBracket,
+                  setNewThreshold({
+                    ...newThreshold,
                     rate: parseFloat(e.target.value) || 0,
                   })
                 }
@@ -626,10 +653,10 @@ const TaxSettings = () => {
               <Label htmlFor="bracket-description">Descrição</Label>
               <Textarea
                 id="bracket-description"
-                value={newBracket.description}
+                value={newThreshold.description}
                 onChange={(e) =>
-                  setNewBracket({
-                    ...newBracket,
+                  setNewThreshold({
+                    ...newThreshold,
                     description: e.target.value,
                   })
                 }
@@ -647,7 +674,7 @@ const TaxSettings = () => {
             </Button>
             <Button
               onClick={handleAddBracket}
-              disabled={newBracket.minValue < 0 || newBracket.rate <= 0}
+              disabled={newThreshold.min < 0 || newThreshold.rate <= 0}
             >
               Adicionar
             </Button>
