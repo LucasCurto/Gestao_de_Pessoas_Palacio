@@ -35,10 +35,6 @@ interface NavItem {
     count: number;
     variant: "default" | "secondary" | "destructive" | "outline";
   };
-  children?: {
-    title: string;
-    path: string;
-  }[];
 }
 
 const Sidebar = ({
@@ -47,7 +43,6 @@ const Sidebar = ({
   className = "",
 }: SidebarProps) => {
   const location = useLocation();
-  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   const navItems: NavItem[] = [
     {
@@ -60,33 +55,16 @@ const Sidebar = ({
       icon: <Users size={collapsed ? 20 : 18} />,
       path: "/employees",
       badge: { count: 2, variant: "secondary" },
-      children: [
-        { title: "Listar Funcionários", path: "/employees" },
-        { title: "Adicionar Funcionário", path: "/employees/add" },
-        { title: "Categorias", path: "/employees/categories" },
-        { title: "Estrutura Organizacional", path: "/employees/structure" },
-      ],
     },
     {
       title: "Motor de Regras",
       icon: <BookOpen size={collapsed ? 20 : 18} />,
       path: "/rules",
-      children: [
-        { title: "Listar Regras", path: "/rules" },
-        { title: "Criar Nova Regra", path: "/rules/create" },
-        { title: "Testar Regras", path: "/rules/test" },
-      ],
     },
     {
       title: "Sistema de Relatórios",
       icon: <FileBarChart size={collapsed ? 20 : 18} />,
       path: "/reports",
-      children: [
-        { title: "Relatórios Predefinidos", path: "/reports/predefined" },
-        { title: "Construtor de Relatórios", path: "/reports/builder" },
-        { title: "Dashboards Configuráveis", path: "/reports/dashboards" },
-        { title: "Modelos de Documentos", path: "/reports/templates" },
-      ],
     },
     {
       title: "Configurações",
@@ -100,10 +78,6 @@ const Sidebar = ({
       badge: { count: 1, variant: "destructive" },
     },
   ];
-
-  const toggleSubmenu = (path: string) => {
-    setOpenSubmenu(openSubmenu === path ? null : path);
-  };
 
   const isActive = (path: string) => {
     return (
@@ -149,134 +123,44 @@ const Sidebar = ({
         <ul className="space-y-1 px-2">
           {navItems.map((item) => (
             <li key={item.path}>
-              {item.children ? (
-                <div className="space-y-1">
-                  <button
-                    onClick={() => toggleSubmenu(item.path)}
-                    className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
-                      isActive(item.path)
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700 hover:bg-gray-100",
-                      collapsed && "justify-center",
-                    )}
-                  >
-                    <div className="flex items-center">
-                      <span className="mr-3">{item.icon}</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={item.path}
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
+                        isActive(item.path)
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700 hover:bg-gray-100",
+                        collapsed && "justify-center",
+                      )}
+                    >
+                      <span className={cn("mr-3", collapsed && "mr-0")}>
+                        {item.icon}
+                      </span>
                       {!collapsed && (
-                        <span className="font-medium truncate">
-                          {item.title}
+                        <span className="font-medium">{item.title}</span>
+                      )}
+                      {item.badge && !collapsed && (
+                        <span
+                          className={cn(
+                            "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
+                            item.badge.variant === "destructive"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-blue-100 text-blue-600",
+                          )}
+                        >
+                          {item.badge.count}
                         </span>
                       )}
-                    </div>
-                    {!collapsed && (
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          "transition-transform",
-                          openSubmenu === item.path && "transform rotate-90",
-                        )}
-                      />
-                    )}
-                    {item.badge && !collapsed && (
-                      <span
-                        className={cn(
-                          "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
-                          item.badge.variant === "destructive"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-blue-100 text-blue-600",
-                        )}
-                      >
-                        {item.badge.count}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Submenu items */}
-                  {!collapsed && openSubmenu === item.path && (
-                    <ul className="pl-10 space-y-1 mt-1">
-                      {item.children.map((child) => (
-                        <li key={child.path}>
-                          <Link
-                            to={child.path}
-                            className={cn(
-                              "block px-3 py-1.5 rounded-md text-sm transition-colors",
-                              isActive(child.path)
-                                ? "bg-blue-50 text-blue-700"
-                                : "text-gray-600 hover:bg-gray-100",
-                            )}
-                          >
-                            {child.title}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                    </Link>
+                  </TooltipTrigger>
+                  {collapsed && (
+                    <TooltipContent side="right">{item.title}</TooltipContent>
                   )}
-
-                  {/* Tooltip for collapsed submenu items */}
-                  {collapsed && item.children && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="mt-1"></div>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="p-0">
-                          <div className="bg-white rounded-md shadow-lg border border-gray-200 py-1 w-56">
-                            {item.children.map((child) => (
-                              <Link
-                                key={child.path}
-                                to={child.path}
-                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                {child.title}
-                              </Link>
-                            ))}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={item.path}
-                        className={cn(
-                          "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
-                          isActive(item.path)
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-gray-700 hover:bg-gray-100",
-                          collapsed && "justify-center",
-                        )}
-                      >
-                        <span className={cn("mr-3", collapsed && "mr-0")}>
-                          {item.icon}
-                        </span>
-                        {!collapsed && (
-                          <span className="font-medium">{item.title}</span>
-                        )}
-                        {item.badge && !collapsed && (
-                          <span
-                            className={cn(
-                              "ml-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium",
-                              item.badge.variant === "destructive"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-blue-100 text-blue-600",
-                            )}
-                          >
-                            {item.badge.count}
-                          </span>
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {collapsed && (
-                      <TooltipContent side="right">{item.title}</TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+                </Tooltip>
+              </TooltipProvider>
             </li>
           ))}
         </ul>

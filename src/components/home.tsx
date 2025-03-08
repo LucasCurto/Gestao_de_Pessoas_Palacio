@@ -5,7 +5,6 @@ import Header from "./layout/Header";
 import FinancialOverview from "./dashboard/FinancialOverview";
 import PaymentAlerts from "./dashboard/PaymentAlerts";
 import HRMetrics from "./dashboard/HRMetrics";
-import QuickActions from "./dashboard/QuickActions";
 
 const Home = () => {
   const { currentCompany } = useCompany();
@@ -31,9 +30,6 @@ const Home = () => {
         {/* Main Dashboard Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="max-w-7xl mx-auto space-y-6">
-            {/* Quick Actions */}
-            <QuickActions />
-
             {/* Financial Overview */}
             <FinancialOverview />
 

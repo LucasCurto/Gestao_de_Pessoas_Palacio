@@ -7,6 +7,7 @@ import SettingsPage from "./components/settings/SettingsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import ReportsPage from "./pages/ReportsPage";
 import DashboardsPage from "./pages/DashboardsPage";
+import IntegrationsPage from "./pages/IntegrationsPage";
 import routes from "tempo-routes";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/dashboards" element={<DashboardsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
